@@ -30,6 +30,7 @@ class MaterialEngine():
                 best_move = move
                 best_move_advantage = advantage
 
+        print(f"AI move made: {move.uci()}")
         return best_move # type: ignore
 
     def advantage_as_result(self, board: chess.Board, move: chess.Move, val_scheme: list[float]) -> float:
