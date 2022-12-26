@@ -35,24 +35,30 @@ def game(white, black) -> chess.Outcome:
     return board.outcome() # type: ignore
 
 def get_player_colour():
-    valid_colors = ["w", "b"]
-    colour = input("Do you want to play as white or black? (w/b): ")
+    valid_colors = ["w", "b", "n"]
+    colour = input("Do you want to play as white or black? (w/b/n): ")
     if colour not in valid_colors:
         colour = get_player_colour()
-        
+
     return colour
 
 def main():
     colour = get_player_colour()
     if colour == "w":
         outcome = game(Human, MaterialEngine)
-    else:
+    elif colour == "b":
         outcome = game(MaterialEngine, Human)
-
-    if outcome.winner:
-        print("White wins!")
     else:
-        print("Black wins!")
+        outcome = game(MaterialEngine, MaterialEngine)
+
+    termination = outcome.termination
+    if termination.value == 1:
+        if outcome.winner:
+            print("White wins!")
+        else:
+            print("Black wins!")
+    else:
+        print(f"Draw by {termination.name}")
     input()
 
 main()
