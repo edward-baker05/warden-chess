@@ -1,6 +1,7 @@
 import chess
-from Players.material_engine import MaterialEngine
+# from Players.material_engine import MaterialEngine
 from Players.human import Human
+from Players.warden.warden_engine import WardenEngine
 
 user_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 board = chess.Board(user_fen)
@@ -45,11 +46,11 @@ def get_player_colour():
 def main():
     colour = get_player_colour()
     if colour == "w":
-        outcome = game(Human, MaterialEngine)
+        outcome = game(Human, WardenEngine)
     elif colour == "b":
-        outcome = game(MaterialEngine, Human)
+        outcome = game(WardenEngine, Human)
     else:
-        outcome = game(MaterialEngine, MaterialEngine)
+        outcome = game(WardenEngine, WardenEngine)
 
     termination = outcome.termination
     if termination.value == 1:
