@@ -1,6 +1,7 @@
 import chess
 import numpy as np
 import tensorflow as tf
+from random import choice
 
 # Define the ChessNN class
 class WardenEngine:
@@ -17,11 +18,11 @@ class WardenEngine:
         ])
 
         # Compile the model
-        self.model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+        self.model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'], run_eagerly=True)
         
         self.called = False
 
-    def train(self, num_games=10000, temperature=0.5):
+    def train(self, num_games=10, temperature=0.5):
         # Generate training data
         X = []
         Y = []
@@ -30,40 +31,42 @@ class WardenEngine:
             # Create a new board and play a game between two copies of the neural network
             board = chess.Board()
             while not board.is_game_over():
-                input_board = self.get_input_array(board.fen())
-                prediction = self.model.predict(input_board.reshape(1, 8, 8, 13))
-
-                # Add some randomness to the move selection process by sampling from a categorical distribution
-                # with the predicted move probabilities as the weights
-                move_probs = prediction[0]
-                if board.turn:
-                    # White's turn
-                    move_probs = np.exp(move_probs / temperature)
-                    move_probs /= sum(move_probs)
-                    move_index = np.random.choice(len(move_probs), p=move_probs)
-                    move = chess.Move.from_uci(board.legal_moves[move_index])
-                    board.push(move)
-                else:
-                    # Black's turn
-                    move_probs = np.exp(-move_probs / temperature)
-                    move_probs /= sum(move_probs)
-                    move_index = np.random.choice(len(move_probs), p=move_probs)
-                    move = chess.Move.from_uci(board.legal_moves[move_index])
-                    board.push(move)
+                move = self.get_move(board, temperature)
+                board.push(move)
+                
+            print(i)
+            print(f"FEN: {board.fen()}")
+            print(f"Result: {board.outcome().termination.name}")
 
             # Add the final board position to the training data
             result = board.result()
             if result == '1-0':
-                X.append(input_board)
+                X.append(self.get_input_array(board.fen()))
                 Y.append(1)
             elif result == '0-1':
-                X.append(input_board)
+                X.append(self.get_input_array(board.fen()))
                 Y.append(0)
+            elif result == '1/2-1/2':
+                # Ignore draws and do not add them to the training data
+                continue
+            else:
+                raise ValueError(f"Unexpected result: {result}")
 
-        # Train the model
+        # Convert the lists to NumPy arrays
         X = np.array(X)
         Y = np.array(Y)
-        self.model.fit(X, Y, epochs=10)
+        
+        print(X, Y)
+
+        # Shuffle the training data before fitting the model
+        indices = np.arange(X.shape[0])
+        np.random.shuffle(indices)
+        X = X[indices]
+        Y = Y[indices]
+
+        # Train the model
+        self.model.fit(X, Y, epochs=10, verbose=0)
+
         
     def get_input_array(self, fen: str) -> np.ndarray:
         # Split the FEN string into individual parts
@@ -76,8 +79,6 @@ class WardenEngine:
         
         if not self.called:
             self.called = True
-            print(parts)
-            print(rows)
         
         for i, row in enumerate(rows):
             col = 0
@@ -104,15 +105,28 @@ class WardenEngine:
 
         return input_array
 
-    def get_move(self, board: chess.Board) -> chess.Move:
-        # Predict the next move based on the current board position
-        input_board = np.array(board.fen().split()[0]).reshape((8, 8, 12))
-        prediction = self.model.predict(input_board)
-        if prediction > 0.5:
-            move = chess.Move.from_uci(board.legal_moves[prediction > 0.5][0])
-        else:
-            move = chess.Move.from_uci(board.legal_moves[prediction < 0.5][0])
+    def get_move(self, board, temperature=0.3):
+        # Get the legal moves for the current player
+        legal_moves = list(board.legal_moves)
+        print(f"Legal moves: {legal_moves}")
+
+        # Convert the board to an input array
+        input_array = self.get_input_array(board.fen())
+        input_array = np.expand_dims(input_array, axis=0)
+
+        # Use the model to predict the probability of winning for each move
+        probabilities = self.model.predict(input_array)
+        print(f"Probabilities: {probabilities}")
+        probabilities = np.squeeze(probabilities)
+
+        # Choose a random move with probability proportional to the predicted probability
+        probabilities = np.power(probabilities, 1.0 / temperature)
+        probabilities /= np.sum(probabilities)
+        print(f"Probabilities: {probabilities}")
+        move = legal_moves[np.argmax(probabilities)]
+
         return move
+
 
     def save(self, filename):
         # Save the model weights to a file
@@ -121,11 +135,3 @@ class WardenEngine:
     def load(self, filename):
         # Load the model weights from a file
         self.model.load_weights(filename)
-
-def main():
-    warden = WardenEngine()
-    # warden.load(r"C:\Users\ed9ba\Documents\Coding\NEA\Warden\neural_net\Players\warden\warden_weights.h5")
-    warden.train()
-    warden.save(r"C:\Users\ed9ba\Documents\Coding\NEA\Warden\neural_net\Players\warden\warden_weights.h5")
-
-main()
