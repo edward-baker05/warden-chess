@@ -2,15 +2,16 @@ import chess
 from random import choice
 
 """Engine which plays the move with the highest immediate material advantage"""
-class MaterialEngine():
-    def __init__(self, colour: bool):
+class MaterialEngine:
+    def __init__(self, colour: bool, depth: int = 4):
         """Creates piece value scheme to specify value of each piece.
-        Pawn = 1, Knight = 3, Bishop = 3, Rook = 5, Queen = 9, King = 99"""
-        self.piece_values = [1.0, 3.0, 3.0, 5.0, 9.0, 99.0]
+        Pawn = 1, Knight = 3, Bishop = 3, Rook = 5, Queen = 9, King = inf"""
+        self.piece_values = [1.0, 3.0, 3.5, 5.0, 9.0, float("inf")]
         self.colour = colour
-        self.depth = 3  # depth of minimax search
+        self.depth = depth  # depth of minimax search
+        # self.time_limit = 20  # time limit for minimax search
 
-    def get_move(self, board: chess.Board) -> chess.Move:
+    def get_move(self, board: chess.Board) -> tuple[chess.Move, float]:
         # Position parameter is an object of type Board
 
         # Finds all possible moves it can play.
@@ -18,7 +19,7 @@ class MaterialEngine():
 
         # Initalizes best move and advantage after it has been played to dummy values.
         choices = []
-        best_move_advantage = -99
+        best_move_advantage = float('inf')
 
         # Initialize alpha and beta to negative and positive infinity, respectively
         alpha = -float('inf')
@@ -26,10 +27,12 @@ class MaterialEngine():
 
         # Loops through possible moves
         for move in moves:
-            advantage = self.minimax(board, move, self.depth, alpha, beta, True)
+            advantage = -self.minimax(board, move, self.depth, alpha, beta, True)
+            if board.gives_check(move):
+                advantage +=  0.5
 
             # If this move is better than best move, it is the best move.
-            if advantage > best_move_advantage:
+            if advantage < best_move_advantage:
                 choices = [move]
                 best_move_advantage = advantage
                 alpha = max(alpha, best_move_advantage)
@@ -37,9 +40,8 @@ class MaterialEngine():
                 choices.append(move)
 
         move = choice(choices)
-        print(f"AI move made: {move.uci()}")
+        print(f"AI move made: {move.uci()} with advantage {best_move_advantage} out of {len(choices)} choices, filtered from {len(list(moves))} moves")
         return move # type: ignore
-
 
     def minimax(self, board: chess.Board, move: chess.Move, depth: int, alpha: float, beta: float, is_max_player: bool) -> float:
         """
@@ -71,7 +73,6 @@ class MaterialEngine():
                     break  # prune the search
             return best_value
 
-    
     def material_advantage(self, board: chess.Board) -> float:
         """
         Finds the advantage a particular side possesses given a value scheme.
@@ -83,4 +84,6 @@ class MaterialEngine():
             else:
                 return -10.0
 
-        return sum([len(board.pieces(piece, self.colour)) * self.piece_values[piece-1] for piece in range(1, 7)]) - sum([len(board.pieces(piece, not self.colour)) * self.piece_values[piece-1] for piece in range(1, 7)])
+        advantage = sum([len(board.pieces(piece, self.colour)) * self.piece_values[piece-1] for piece in range(1, 7)]) - sum([len(board.pieces(piece, not self.colour)) * self.piece_values[piece-1] for piece in range(1, 7)])
+
+        return advantage

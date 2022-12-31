@@ -132,3 +132,5 @@ dmypy.json
 
 **\#*
 .vscode
+Games
+neural_net/Players/mtcs_engine
