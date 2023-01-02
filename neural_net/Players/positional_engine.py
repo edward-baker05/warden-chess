@@ -97,10 +97,17 @@ class PositionalEngine:
         moves = list(board.legal_moves)
         best_moves = []
         best_evaluation = float("-inf")
+
         for move in moves:
             temp_board = board.copy()
             temp_board.push(move)
+
+            # Check if its checkmate 
+            if temp_board.is_checkmate():
+                return move
+
             evaluation = -self.search(temp_board, self.depth - 1, float("-inf"), float("inf"))
+
             if evaluation > best_evaluation:
                 best_evaluation = evaluation
                 best_moves = [move]
@@ -111,7 +118,7 @@ class PositionalEngine:
         from numpy import linspace
         
         weights = list(linspace(1, 0, len(best_moves)))
-        best_move = choices(best_moves, weights=weights, k=1)[0]
+        best_move = choices(best_moves, weights=weights)[0]
 
         print(f"AI move made: {best_move.uci()} with advantage {best_evaluation}, filtered from {len(list(moves))} moves")
-        return move
+        return best_move

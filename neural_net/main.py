@@ -2,6 +2,8 @@ import chess
 from Players.material_engine import MaterialEngine
 from Players.human import Human
 from Players.positional_engine import PositionalEngine
+from Players.mtcs_engine.mtcs_engine import MonteCarloEngine
+from Players.warden.warden_engine import WardenEngine
 from time import perf_counter
 
 def display_board(board: chess.Board):
@@ -22,7 +24,7 @@ def game(white, black, board: chess.Board) -> chess.Outcome:
     player1 = white(chess.WHITE)
     player2 = black(chess.BLACK)
     display_board(board)
-    with open("game.txt", "w") as f:
+    with open(r"neural_net\Players\game.txt", "w") as f:
         f.write(board.fen() + "\n")
         while not board.outcome():
             if board.turn == chess.WHITE:
@@ -36,7 +38,15 @@ def game(white, black, board: chess.Board) -> chess.Outcome:
             board.push(move)
             display_board(board)
             f.write(move.uci() + "\n")
-    return board.outcome() # type: ignore
+        try:
+            player1.learn(board)
+        except AttributeError:
+            try:
+                player2.learn(board)
+            except AttributeError:
+                return board
+
+    return board
 
 def get_player_colour():
     valid_colors = ["w", "b", "n"]
@@ -52,13 +62,13 @@ def main():
 
     colour = get_player_colour()
     if colour == "w":
-        outcome = game(Human, MaterialEngine, board)
+        outcome = game(Human, MonteCarloEngine, board)
     elif colour == "b":
-        outcome = game(MaterialEngine, Human, board)
+        outcome = game(MonteCarloEngine, Human, board)
     else:
-        outcome = game(PositionalEngine, MaterialEngine, board)
+        outcome = game(MonteCarloEngine, MaterialEngine, board)
 
-    termination = outcome.termination
+    termination = outcome.outcome().termination
     if termination.value == 1:
         if outcome.winner:
             print("White wins!")
@@ -68,8 +78,8 @@ def main():
         print(f"Draw by {termination.name}")
     input()
     
-user_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-board = chess.Board(user_fen)
+# user_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+# board = chess.Board(user_fen)
 
 main()
 

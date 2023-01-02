@@ -111,7 +111,7 @@ class WardenEngine:
     #     move = legal_moves[np.argmax(probabilities)]
 
     #     return move
-    def get_move(self, board: chess.Board, temperature: float, played_moves: list[chess.Move] = []) -> chess.Move:
+    def get_move(self, board: chess.Board, temperature: float= 0.4, played_moves: list[chess.Move] = []) -> chess.Move:
         # Get the list of all legal moves
         moves = board.legal_moves
 

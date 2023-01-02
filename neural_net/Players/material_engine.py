@@ -32,7 +32,7 @@ class MaterialEngine:
                 advantage +=  0.5
 
             # If this move is better than best move, it is the best move.
-            if advantage < best_move_advantage:
+            if advantage > best_move_advantage:
                 choices = [move]
                 best_move_advantage = advantage
                 alpha = max(alpha, best_move_advantage)
@@ -78,11 +78,12 @@ class MaterialEngine:
         Finds the advantage a particular side possesses given a value scheme.
         """
         if board.is_game_over():
-            termination = board.outcome().termination
+            outcome = board.outcome()
+            termination = outcome.termination
             if termination.value == 1:
-                return float("inf") if board.outcome().winner == self.colour else float("-inf")
+                return float("inf") if outcome.winner == self.colour else float("-inf")
             else:
-                return -10.0
+                return 0.0
 
         advantage = sum([len(board.pieces(piece, self.colour)) * self.piece_values[piece-1] for piece in range(1, 7)]) - sum([len(board.pieces(piece, not self.colour)) * self.piece_values[piece-1] for piece in range(1, 7)])
 
