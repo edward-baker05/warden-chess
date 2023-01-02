@@ -134,3 +134,4 @@ dmypy.json
 .vscode
 neural_net\Players\mtcs_engine\sample_fen.csv
 *.pgn
+sample_fen.csv

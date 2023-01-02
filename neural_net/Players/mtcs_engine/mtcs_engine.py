@@ -53,21 +53,25 @@ class Node:
         return self.value + math.sqrt(2 * math.log(self.parent.visits) / self.visits)
 
 class MonteCarloEngine:
-    def __init__(self, colour, temperature=0.3, iterations=500, max_depth=4):
+    def __init__(self, colour, temperature=1.9, iterations=1000, max_depth=7):
         import os
-        self.model = tf.keras.Sequential([
-            tf.keras.layers.Conv2D(64, (3, 3), activation='relu', input_shape=(8, 8, 12)),
-            tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
-            tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(128, activation='relu'),
-            tf.keras.layers.Dense(2, activation='softmax')
-        ])
+        # self.model = tf.keras.Sequential([
+        #     tf.keras.layers.Conv2D(64, (3, 3), activation='relu', input_shape=(8, 8, 12)),
+        #     tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+        #     tf.keras.layers.Flatten(),
+        #     tf.keras.layers.Dense(128, activation='relu'),
+        #     tf.keras.layers.Dense(2, activation='softmax')
+        # ])
+        
+        self.model = create_model()
+        optimizer = tf.keras.optimizers.AdamW(learning_rate=0.001, weight_decay=0.01)
+        self.model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
 
         self.colour = colour
         self.max_depth = max_depth
         self.temperature = temperature
         self.iterations = iterations
-        
+
         if os.path.exists(r"neural_net\Players\mtcs_engine\weights.h5"):
             self.model.load_weights(r"neural_net\Players\mtcs_engine\weights.h5")
             print("Loaded weights from disk")
@@ -129,11 +133,19 @@ class MonteCarloEngine:
             value = 1 - value
             node = node.parent
 
-    def get_move(self, board):
+    def get_move(self, board: chess.Board):
+        # Create a root node for the MCTS tree
         root_node = Node(board)
-        best_node = self.search(root_node, self.model)
-        best_move = best_node.board.peek()
-        return best_move
+
+        # Add the legal moves for the position represented by the root node as children of the root node
+        for move in root_node.board.legal_moves:
+            root_node.add_child(move)
+
+        # Search the MCTS tree and choose the child node with the highest UCB1 score as the next move
+        chosen_node = self.search(root_node, self.model)
+        move = chosen_node.board.peek()
+        print(f"AI made move: {move}")
+        return move
 
 def board_to_tensor(board):
     # Convert the board to a tensor
@@ -148,56 +160,92 @@ def board_to_tensor(board):
                     tensor[i][j][piece.piece_type + 5] = 1
     return tensor.reshape(1, 8, 8, 12)
 
+def create_model():
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layers.Conv2D(filters=128, kernel_size=3, padding='same', activation='relu', input_shape=(8, 8, 12)))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Conv2D(filters=128, kernel_size=3, padding='same', activation='relu'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
+    model.add(tf.keras.layers.Dropout(rate=0.3))
+    
+    model.add(tf.keras.layers.Conv2D(filters=256, kernel_size=3, padding='same', activation='relu'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Conv2D(filters=256, kernel_size=3, padding='same', activation='relu'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
+    model.add(tf.keras.layers.Dropout(rate=0.3))
+    
+    model.add(tf.keras.layers.Conv2D(filters=512, kernel_size=3, padding='same', activation='relu'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Conv2D(filters=512, kernel_size=3, padding='same', activation='relu'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
+    model.add(tf.keras.layers.Dropout(rate=0.3))
+    
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(units=1024, activation='relu'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Dropout(rate=0.3))
+    model.add(tf.keras.layers.Dense(units=512, activation='relu'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Dropout(rate=0.3))
+    model.add(tf.keras.layers.Dense(units=2, activation='softmax'))
+    
+    return model
+
 def train():
-    import csv
     import numpy as np
     import tensorflow as tf
+    import pandas as pd
 
     # Load the dataset
-    with open(r"neural_net\Players\mtcs_engine\sample_fen.csv", "r") as f:
-        games = list(csv.reader(f))
-
-    # Preprocess the data
-    inputs = []
-    labels = []
-
-    for game in games:
-        board = chess.Board(game[0])
-        tensor = board_to_tensor(board=board).reshape(8, 8, 12)  # Convert the board position to an input tensor
-        outcome = game[1]  # win, loss, or draw
-        if outcome == "w":
-            labels.append(1)
-        elif outcome == "b":
-            labels.append(0)
-        else:
-            labels.append(0.5)
-        inputs.append(tensor)
-
-    inputs = np.array(inputs)
-    labels = tf.keras.utils.to_categorical(labels, num_classes=2)  # Convert the labels to categorical format for the loss function
+    data = pd.read_csv(r'neural_net\Players\mtcs_engine\sample_fen.csv', chunksize=100000)
 
     # Define the neural network model
-    model = tf.keras.Sequential([
-        tf.keras.layers.Conv2D(64, (3, 3), activation='relu', input_shape=(8, 8, 12)),
-        tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
-        tf.keras.layers.Flatten(),
-        tf.keras.layers.Dense(128, activation='relu'),
-        tf.keras.layers.Dense(2, activation='softmax')
-    ])
+    model = create_model()
 
     try:
         model.load_weights(r"neural_net\Players\mtcs_engine\weights.h5")
     except FileNotFoundError:
         pass
+    
+    try:
+        for chunk in data:
+            games = chunk.values.tolist()
+            # Preprocess the data
+            inputs = []
+            labels = []
 
-    # Compile the model
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+            for game in games:
+                board = chess.Board(game[0])
+                tensor = board_to_tensor(board=board).reshape(8, 8, 12)  # Convert the board position to an input tensor
+                outcome = game[1]  # win, loss, or draw
+                if outcome == "w":
+                    labels.append([0, 1])
+                elif outcome == "b":
+                    labels.append([0, 0])
+                else:
+                    labels.append([1, 1])
+                inputs.append(tensor)
 
-    # Train the model
-    model.fit(inputs, labels, epochs=10, batch_size=128)
+            inputs = np.array(inputs)
+            labels = np.array(labels)
+
+            # Compile the model
+            optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
+            model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
+
+            # Train the model
+            model.fit(inputs, labels, epochs=100, batch_size=128)
+            print("Finished training cycle")
+    except KeyboardInterrupt:
+        pass
 
     # Save the new model weights
     model.save_weights(r"neural_net\Players\mtcs_engine\weights.h5")
+    print()
+    print("Saved weights  to disk")
 
 if __name__ == "__main__":
     train()

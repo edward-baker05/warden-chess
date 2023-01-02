@@ -38,15 +38,15 @@ def game(white, black, board: chess.Board) -> chess.Outcome:
             board.push(move)
             display_board(board)
             f.write(move.uci() + "\n")
-        try:
-            player1.learn(board)
-        except AttributeError:
-            try:
-                player2.learn(board)
-            except AttributeError:
-                return board
+        # try:
+        #     player1.learn(board)
+        # except AttributeError:
+        #     try:
+        #         player2.learn(board)
+        #     except AttributeError:
+        #         return board.outcome()
 
-    return board
+    return board.outcome()
 
 def get_player_colour():
     valid_colors = ["w", "b", "n"]
@@ -57,7 +57,8 @@ def get_player_colour():
     return colour
 
 def main():
-    user_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    # user_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    user_fen = "rnbqk1nr/pp3ppp/2pbp3/3p4/1P6/P5PP/2PPPP2/RNBQKBNR w KQkq - 1 5"
     board = chess.Board(user_fen)
 
     colour = get_player_colour()
@@ -68,7 +69,7 @@ def main():
     else:
         outcome = game(MonteCarloEngine, MaterialEngine, board)
 
-    termination = outcome.outcome().termination
+    termination = outcome.termination
     if termination.value == 1:
         if outcome.winner:
             print("White wins!")
