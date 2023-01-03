@@ -57,9 +57,8 @@ def get_player_colour():
     return colour
 
 def main():
-    user_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     # user_fen = "rnbqkbnr/ppppppp1/8/7p/3P4/6P1/PPP1PP1P/RNBQKBNR b KQkq - 0 2"
-    board = chess.Board(user_fen)
+    board = chess.Board()
 
     colour = get_player_colour()
     if colour == "w":
