@@ -3,7 +3,7 @@ from random import choice
 
 """Engine which plays the move with the highest immediate material advantage"""
 class MaterialEngine:
-    def __init__(self, colour: bool, depth: int = 4):
+    def __init__(self, colour: bool, depth: int = 3):
         """Creates piece value scheme to specify value of each piece.
         Pawn = 1, Knight = 3, Bishop = 3, Rook = 5, Queen = 9, King = inf"""
         self.piece_values = [1.0, 3.0, 3.5, 5.0, 9.0, float("inf")]
@@ -27,7 +27,7 @@ class MaterialEngine:
 
         # Loops through possible moves
         for move in moves:
-            advantage = -self.minimax(board, move, self.depth, alpha, beta, True)
+            advantage = self.minimax(board, move, self.depth, alpha, beta, True)
             if board.gives_check(move):
                 advantage +=  0.5
 
