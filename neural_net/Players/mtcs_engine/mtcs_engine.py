@@ -1,5 +1,5 @@
-import chess
 import math
+import chess
 import tensorflow as tf
 import numpy as np
 
@@ -53,7 +53,7 @@ class Node:
         return self.value + math.sqrt(2 * math.log(self.parent.visits) / self.visits)
 
 class MonteCarloEngine:
-    def __init__(self, colour, temperature=1.9, iterations=10000, max_depth=20):
+    def __init__(self, colour, temperature=1, iterations=10000, max_depth=25):
         import os
         # self.model = tf.keras.Sequential([
         #     tf.keras.layers.Conv2D(64, (3, 3), activation='relu', input_shape=(8, 8, 12)),
@@ -71,11 +71,11 @@ class MonteCarloEngine:
         self.temperature = temperature
         self.iterations = iterations
 
-        if os.path.exists(r"neural_net\Players\mtcs_engine\weights.h5"):
-            self.model.load_weights(r"neural_net\Players\mtcs_engine\weights.h5")
-            print("Loaded weights from disk")
-        else:
-            print("No weights found on disk")
+        # try:
+        self.model.load_weights(r"/workspaces/warden-chess/neural_net/Players/mtcs_engine/weights.h5")
+        print("Loaded weights from disk")
+        # except:
+        #     print("No weights found on disk")
 
         # Create a transposition table
         self.transposition_table = TranspositionTable()

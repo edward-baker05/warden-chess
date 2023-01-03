@@ -1,10 +1,9 @@
+from time import perf_counter
 import chess
 from Players.material_engine import MaterialEngine
 from Players.human import Human
 from Players.positional_engine import PositionalEngine
 from Players.mtcs_engine.mtcs_engine import MonteCarloEngine
-from Players.warden.warden_engine import WardenEngine
-from time import perf_counter
 
 def display_board(board: chess.Board):
     for i, row in enumerate(board.unicode(invert_color=True).split("\n")):
@@ -21,8 +20,8 @@ def get_move(board: chess.Board, player) -> chess.Move:
     return move
 
 def game(white, black, board: chess.Board) -> chess.Outcome:
-    player1 = white(chess.WHITE)
-    player2 = black(chess.BLACK)
+    player1 = white(chess.WHITE, iterations=100)
+    player2 = black(chess.BLACK, iterations=100000)
     display_board(board)
     with open(r"neural_net\Players\game.txt", "w") as f:
         f.write(board.fen() + "\n")
@@ -66,7 +65,7 @@ def main():
     elif colour == "b":
         outcome = game(MonteCarloEngine, Human, board)
     else:
-        outcome = game(MonteCarloEngine, MaterialEngine, board)
+        outcome = game(MonteCarloEngine, MonteCarloEngine, board)
 
     termination = outcome.termination
     if termination.value == 1:
@@ -77,7 +76,7 @@ def main():
     else:
         print(f"Draw by {termination.name}")
     input()
-    
+
 # user_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 # board = chess.Board(user_fen)
 
