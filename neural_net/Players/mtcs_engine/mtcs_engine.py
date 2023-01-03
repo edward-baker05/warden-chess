@@ -245,7 +245,7 @@ def train():
     # Save the new model weights
     model.save_weights(r"neural_net\Players\mtcs_engine\weights.h5")
     print()
-    print("Saved weights  to disk")
+    print("Saved weights to disk")
 
 def get_weights():
     model = create_model()
