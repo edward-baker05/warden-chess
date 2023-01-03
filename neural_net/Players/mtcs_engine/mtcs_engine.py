@@ -53,7 +53,7 @@ class Node:
         return self.value + math.sqrt(2 * math.log(self.parent.visits) / self.visits)
 
 class MonteCarloEngine:
-    def __init__(self, colour, temperature=1.9, iterations=1000, max_depth=7):
+    def __init__(self, colour, temperature=1.9, iterations=10000, max_depth=20):
         import os
         # self.model = tf.keras.Sequential([
         #     tf.keras.layers.Conv2D(64, (3, 3), activation='relu', input_shape=(8, 8, 12)),
@@ -62,9 +62,8 @@ class MonteCarloEngine:
         #     tf.keras.layers.Dense(128, activation='relu'),
         #     tf.keras.layers.Dense(2, activation='softmax')
         # ])
-        
         self.model = create_model()
-        optimizer = tf.keras.optimizers.AdamW(learning_rate=0.001, weight_decay=0.01)
+        optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
         self.model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
 
         self.colour = colour
@@ -114,7 +113,8 @@ class MonteCarloEngine:
 
         tensor = board_to_tensor(node.board)
         prediction = model.predict(tensor, verbose=0)[0][0]
-        value = (prediction + 1) / 2
+        print(prediction)
+        value = prediction
         if node.board.turn == self.colour:
             value = value
         else:
@@ -209,9 +209,9 @@ def train():
         model.load_weights(r"neural_net\Players\mtcs_engine\weights.h5")
     except FileNotFoundError:
         pass
-    
+
     try:
-        for chunk in data:
+        for i, chunk in enumerate(data):
             games = chunk.values.tolist()
             # Preprocess the data
             inputs = []
@@ -226,19 +226,19 @@ def train():
                 elif outcome == "b":
                     labels.append([0, 0])
                 else:
-                    labels.append([1, 1])
+                    labels.append([1, 0])
                 inputs.append(tensor)
 
             inputs = np.array(inputs)
             labels = np.array(labels)
 
             # Compile the model
-            optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
+            optimizer = tf.keras.optimizers.Adam(learning_rate=0.0008)
             model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
 
             # Train the model
-            model.fit(inputs, labels, epochs=100, batch_size=128)
-            print("Finished training cycle")
+            model.fit(inputs, labels, epochs=100, batch_size=32)
+            print(f"Finished training cycle {i}")
     except KeyboardInterrupt:
         pass
 
@@ -247,5 +247,13 @@ def train():
     print()
     print("Saved weights  to disk")
 
+def get_weights():
+    model = create_model()
+    model.load_weights(r"neural_net\Players\mtcs_engine\weights.h5")
+    for layer in model.layers:
+        weights = layer.get_weights()
+        print(weights)
+
 if __name__ == "__main__":
-    train()
+    train() 
+    # get_weights()
