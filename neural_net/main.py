@@ -20,8 +20,8 @@ def get_move(board: chess.Board, player) -> chess.Move:
     return move
 
 def game(white, black, board: chess.Board) -> chess.Outcome:
-    player1 = white(chess.WHITE, iterations=100)
-    player2 = black(chess.BLACK, iterations=100000)
+    player1 = white(chess.WHITE)
+    player2 = black(chess.BLACK)
     display_board(board)
     with open(r"neural_net\Players\game.txt", "w") as f:
         f.write(board.fen() + "\n")
