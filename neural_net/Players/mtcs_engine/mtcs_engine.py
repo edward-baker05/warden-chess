@@ -77,7 +77,7 @@ class Node:
         self.children.append(child)
         return child
 
-   def ucb1(self) -> float:
+    def ucb1(self) -> float:
         """Calculate and return the UCB1 score for the current node.
 
         Returns:
@@ -88,7 +88,7 @@ class Node:
         return self.value + math.sqrt(2 * math.log(self.parent.visits) / self.visits)
 
 class MonteCarloEngine:
-    def __init__(self, colour: int, temperature: float=1, iterations: int=10000, max_depth: int=25) -> None:
+    def __init__(self, colour: int, temperature: float=0.4, iterations: int=100000, max_depth: int=15) -> None:
         """Initialize the Monte Carlo engine.
 
         Parameters:
@@ -106,7 +106,7 @@ class MonteCarloEngine:
         #     tf.keras.layers.Dense(2, activation='softmax')
         # ])
         self.model = create_model()
-        optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
+        optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
         self.model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
 
         self.colour = colour
@@ -114,11 +114,11 @@ class MonteCarloEngine:
         self.temperature = temperature
         self.iterations = iterations
 
-        # try:
-        self.model.load_weights(r"/workspaces/warden-chess/neural_net/Players/mtcs_engine/weights.h5")
-        print("Loaded weights from disk")
-        # except:
-        #     print("No weights found on disk")
+        try:
+            self.model.load_weights(r"neural_net/Players/mtcs_engine/weights.h5")
+            print("Loaded weights from disk")
+        except:
+            print("No weights found on disk")
 
         # Create a transposition table
         self.transposition_table = TranspositionTable()
@@ -182,7 +182,7 @@ class MonteCarloEngine:
 
         tensor = board_to_tensor(node.board).reshape(1, 8, 8, 12)
         value = float(model.predict(tensor, verbose=0)[0][0])
-        print(type(value))
+        # print(value)
         if node.board.turn != self.colour:
             value = 1 - value
 
@@ -205,7 +205,7 @@ class MonteCarloEngine:
             value = 1 - value
             node = node.parent
 
-    def get_move(self, board: chess.Board, model: tf.keras.Model) -> chess.Move:
+    def get_move(self, board: chess.Board) -> chess.Move:
         """Get the best move for the given board position according to the Monte Carlo tree search.
 
         Parameters:
@@ -261,31 +261,31 @@ def create_model() -> tf.keras.Model:
     model.add(tf.keras.layers.Conv2D(filters=128, kernel_size=3, padding='same', activation='relu'))
     model.add(tf.keras.layers.BatchNormalization())
     model.add(tf.keras.layers.MaxPool2D(pool_size=2))
-    model.add(tf.keras.layers.Dropout(rate=0.3))
-    
+    model.add(tf.keras.layers.Dropout(rate=0.4))
+
     model.add(tf.keras.layers.Conv2D(filters=256, kernel_size=3, padding='same', activation='relu'))
     model.add(tf.keras.layers.BatchNormalization())
     model.add(tf.keras.layers.Conv2D(filters=256, kernel_size=3, padding='same', activation='relu'))
     model.add(tf.keras.layers.BatchNormalization())
     model.add(tf.keras.layers.MaxPool2D(pool_size=2))
-    model.add(tf.keras.layers.Dropout(rate=0.3))
-    
+    model.add(tf.keras.layers.Dropout(rate=0.4))
+
     model.add(tf.keras.layers.Conv2D(filters=512, kernel_size=3, padding='same', activation='relu'))
     model.add(tf.keras.layers.BatchNormalization())
     model.add(tf.keras.layers.Conv2D(filters=512, kernel_size=3, padding='same', activation='relu'))
     model.add(tf.keras.layers.BatchNormalization())
     model.add(tf.keras.layers.MaxPool2D(pool_size=2))
-    model.add(tf.keras.layers.Dropout(rate=0.3))
-    
+    model.add(tf.keras.layers.Dropout(rate=0.4))
+
     model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dense(units=1024, activation='relu'))
     model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Dropout(rate=0.3))
+    model.add(tf.keras.layers.Dropout(rate=0.4))
     model.add(tf.keras.layers.Dense(units=512, activation='relu'))
     model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Dropout(rate=0.3))
+    model.add(tf.keras.layers.Dropout(rate=0.4))
     model.add(tf.keras.layers.Dense(units=2, activation='softmax'))
-    
+
     return model
 
 def train() -> None:
@@ -330,14 +330,14 @@ def train() -> None:
             labels = np.array(labels)
 
             # Compile the model
-            optimizer = tf.keras.optimizers.Adam(learning_rate=0.0008)
+            optimizer = tf.keras.optimizers.Adam(learning_rate=0.0004)
             model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
 
             # Train the model
-            model.fit(inputs, labels, epochs=100, batch_size=32)
+            model.fit(inputs, labels, epochs=20, batch_size=32)
             print(f"Finished training cycle {i}")
     except KeyboardInterrupt:
-        return
+        pass
 
     # Save the new model weights
     model.save_weights(r"neural_net\Players\mtcs_engine\weights.h5")
