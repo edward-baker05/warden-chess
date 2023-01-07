@@ -4,6 +4,7 @@ from Players.material_engine import MaterialEngine
 from Players.human import Human
 from Players.positional_engine import PositionalEngine
 from Players.mtcs_engine.mtcs_engine import MonteCarloEngine
+from Players.warden.warden_engine import WardenEngine
 
 def display_board(board: chess.Board):
     for i, row in enumerate(board.unicode(invert_color=True).split("\n")):
@@ -56,7 +57,8 @@ def get_player_colour():
     return colour
 
 def main():
-    # user_fen = "rnbqkbnr/ppppppp1/8/7p/3P4/6P1/PPP1PP1P/RNBQKBNR b KQkq - 0 2"
+    # user_fen = "r1b1k2r/ppp2pp1/2n1p3/1N1p3p/3Pqb2/1BP5/PP1RQP1P/2K2R2 b kq - 0 1"
+    # board = chess.Board(user_fen)
     board = chess.Board()
 
     colour = get_player_colour()
