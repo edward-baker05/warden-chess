@@ -88,7 +88,7 @@ class Node:
         return self.value + math.sqrt(2 * math.log(self.parent.visits) / self.visits)
 
 class MonteCarloEngine:
-    def __init__(self, colour: int, temperature: float=0.4, iterations: int=100000, max_depth: int=15) -> None:
+    def __init__(self, colour: int=chess.WHITE, temperature: float=0.4, iterations: int=100000, max_depth: int=15) -> None:
         """Initialize the Monte Carlo engine.
 
         Parameters:
