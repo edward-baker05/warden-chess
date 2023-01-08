@@ -201,4 +201,10 @@ document.getElementById('startBtn').addEventListener('click', async () => {
     console.log(resp)
 })
 
+// If stop button pressed, send string to python
+document.getElementById('stopBtn').addEventListener('click', async () => {
+    const resp = await sendStringToPython('Stop')
+    console.log(resp)
+})
+
 getColour()
