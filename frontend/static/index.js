@@ -1,5 +1,3 @@
-// var PythonShell = require('python-shell').PythonShell
-
 var board = null
 var game = new Chess()
 var whiteSquareGrey = '#a9a9a9'
@@ -35,6 +33,9 @@ function onDragStart(source, piece) {
 function onDrop(source, target) {
     removeGreySquares()
 
+    console.log(typeof(source));
+    console.log(typeof(target));
+
     // check if it is the player's turn
     if (game.turn() !== playerColour) {
         return 'snapback'
@@ -47,7 +48,7 @@ function onDrop(source, target) {
         promotion: 'q'
     })
 
-    // If the move is a pawn promotion, create a selection box with 4 options for promotion
+    // If the move is a pawn promotion, create a selection box with 4 options for promotion - none of this works at the moment
     if (move.flags.includes('p')) {
         var promotion = ''
         var choices = ['Queen', 'Rook', 'Bishop', 'Knight']
@@ -107,6 +108,33 @@ function onDrop(source, target) {
         popup.innerHTML = 'Game Over'
         document.body.appendChild(popup)
     }
+}
+
+function aiMove(source, target) {
+    removeGreySquares()
+
+    console.log(source);
+    console.log(target);
+    console.log(typeof (source));
+    console.log(typeof (target));
+
+    // Make the AI move
+    game.move({
+        from: source,
+        to: target,
+        promotion: 'q'
+    })
+
+    // check if the game is over
+    if (game.game_over()) {
+        // Create a popup saying the game is over
+        var popup = document.createElement('div')
+        popup.classList.add('popup')
+        popup.innerHTML = 'Game Over'
+        document.body.appendChild(popup)
+    }
+
+    onSnapEnd();
 }
 
 function onMouseoverSquare(square, piece) {
@@ -185,26 +213,19 @@ function getColour() {
     })
 }
 
-// JavaScript code
-async function sendStringToPython(body) {
-    try {
-        const resp = await fetch('/move.py', { method: 'POST', body })
-        return await resp.text()
-    } catch (data) {
-        return console.error(data)
-    }
-}
-
-// If start button pressed, send string to python
-document.getElementById('startBtn').addEventListener('click', async () => {
-    const resp = await sendStringToPython('Hello World!')
-    console.log(resp)
-})
-
-// If stop button pressed, send string to python
-document.getElementById('stopBtn').addEventListener('click', async () => {
-    const resp = await sendStringToPython('Stop')
-    console.log(resp)
-})
+// This is a stupidly old style of code - I need to update this #TODO
+$(function () {
+    $('a#getmove').on('click', function (e) {
+        console.log("Quering AI for next move...");
+        const data = game.fen();
+        e.preventDefault()
+        $.getJSON('/get_move', {fen: data},
+            function (response) {
+                const fen_result = response.result;
+                aiMove(fen_result[0], fen_result[1]);
+            });
+        return true;
+    });
+});
 
 getColour()
