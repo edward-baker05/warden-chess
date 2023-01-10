@@ -97,17 +97,7 @@ class MonteCarloEngine:
         iterations: the number of iterations to run the Monte Carlo tree search.
         max_depth: the maximum depth to search in the tree.
         """
-        import os
-        # self.model = tf.keras.Sequential([
-        #     tf.keras.layers.Conv2D(64, (3, 3), activation='relu', input_shape=(8, 8, 12)),
-        #     tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
-        #     tf.keras.layers.Flatten(),
-        #     tf.keras.layers.Dense(128, activation='relu'),
-        #     tf.keras.layers.Dense(2, activation='softmax')
-        # ])
         self.model = create_model()
-        optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
-        self.model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
 
         self.colour = colour
         self.max_depth = max_depth
@@ -181,10 +171,11 @@ class MonteCarloEngine:
             return value
 
         tensor = board_to_tensor(node.board).reshape(1, 8, 8, 12)
-        value = float(model.predict(tensor, verbose=0)[0][0])
-        # print(value)
+        value = model.predict(tensor, verbose=0)
+        print(value)
+        exit()
         if node.board.turn != self.colour:
-            value = 1 - value
+            value = -value
 
         # Store the value in the transposition table
         self.transposition_table.put(node.board, value)
@@ -248,44 +239,35 @@ def board_to_tensor(board: chess.Board) -> np.ndarray:
                 else:
                     tensor[i][j][piece.piece_type + 5] = 1
     return tensor
-
+    
+def normalise(n: float) -> float:
+    return (n + 4288) / (4283 + 4288)
+    
 def create_model() -> tf.keras.Model:
     """Create and return a TensorFlow model for evaluating chess positions.
 
     Returns:
     A TensorFlow model.
     """
+    
     model = tf.keras.Sequential()
-    model.add(tf.keras.layers.Conv2D(filters=128, kernel_size=3, padding='same', activation='relu', input_shape=(8, 8, 12)))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Conv2D(filters=128, kernel_size=3, padding='same', activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
-    model.add(tf.keras.layers.Dropout(rate=0.4))
-
-    model.add(tf.keras.layers.Conv2D(filters=256, kernel_size=3, padding='same', activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Conv2D(filters=256, kernel_size=3, padding='same', activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
-    model.add(tf.keras.layers.Dropout(rate=0.4))
-
-    model.add(tf.keras.layers.Conv2D(filters=512, kernel_size=3, padding='same', activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Conv2D(filters=512, kernel_size=3, padding='same', activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
-    model.add(tf.keras.layers.Dropout(rate=0.4))
-
+    model.add(tf.keras.layers.Conv2D(32, kernel_size=(3, 3),
+                     activation='relu',
+                     input_shape=(8, 8, 12)))
+    model.add(tf.keras.layers.Conv2D(64, (3, 3), activation='relu'))
+    model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
+    model.add(tf.keras.layers.Dropout(0.25))
     model.add(tf.keras.layers.Flatten())
-    model.add(tf.keras.layers.Dense(units=1024, activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Dropout(rate=0.4))
-    model.add(tf.keras.layers.Dense(units=512, activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Dropout(rate=0.4))
-    model.add(tf.keras.layers.Dense(units=2, activation='softmax'))
-
+    model.add(tf.keras.layers.Dense(128, activation='relu'))
+    model.add(tf.keras.layers.Dropout(0.5))
+    model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
+    
+    
+    optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+    
+    model.compile(optimizer=optimizer,
+                  loss='mean_squared_error',
+                  metrics=['accuracy'])
     return model
 
 def train() -> None:
@@ -293,11 +275,10 @@ def train() -> None:
     Train the TensorFlow model using the data in the `sample_fen.csv` file. The model is saved to the file `weights.h5` after training.
     """
     import numpy as np
-    import tensorflow as tf
     import pandas as pd
 
     # Load the dataset
-    data = pd.read_csv(r'neural_net\Players\mtcs_engine\sample_fen.csv', chunksize=100000)
+    data = pd.read_csv(r'neural_net\Players\mtcs_engine\Scores\sample_fen.csv', chunksize=100000)
 
     # Define the neural network model
     model = create_model()
@@ -317,24 +298,18 @@ def train() -> None:
             for game in games:
                 board = chess.Board(game[0])
                 tensor = board_to_tensor(board=board)  # Convert the board position to an input tensor
-                outcome = game[1]  # win, loss, or draw
-                if outcome == "w":
-                    labels.append([0, 1])
-                elif outcome == "b":
-                    labels.append([0, 0])
-                else:
-                    labels.append([1, 0])
+                try:
+                    score = normalise(int(game[1]))  # stockfish eval after 1s
+                except ValueError:
+                    continue
+                labels.append(score)
                 inputs.append(tensor)
 
             inputs = np.array(inputs)
             labels = np.array(labels)
 
-            # Compile the model
-            optimizer = tf.keras.optimizers.Adam(learning_rate=0.0004)
-            model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
-
             # Train the model
-            model.fit(inputs, labels, epochs=20, batch_size=32)
+            model.fit(inputs, labels, epochs=50, batch_size=32)
             print(f"Finished training cycle {i}")
     except KeyboardInterrupt:
         pass

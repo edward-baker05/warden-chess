@@ -1,10 +1,7 @@
 from time import perf_counter
 import chess
-from Players.material_engine import MaterialEngine
 from Players.human import Human
-from Players.positional_engine import PositionalEngine
 from Players.mtcs_engine.mtcs_engine import MonteCarloEngine
-from Players.warden.warden_engine import WardenEngine
 
 def display_board(board: chess.Board):
     for i, row in enumerate(board.unicode(invert_color=True).split("\n")):
@@ -45,8 +42,8 @@ def game(white, black, board: chess.Board) -> chess.Outcome:
         #         player2.learn(board)
         #     except AttributeError:
         #         return board.outcome()
-
-    return board.outcome()
+    if outcome := board.outcome():
+        return outcome
 
 def get_player_colour():
     valid_colors = ["w", "b", "n"]
@@ -86,7 +83,10 @@ main()
 
 def test():
     from os import system, name
+    
+    user_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     total = 0
+    
     for i in range(15):
         board = chess.Board(user_fen)
         outcome = game(PositionalEngine, MaterialEngine, board)
