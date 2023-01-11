@@ -34,6 +34,9 @@ for collection in directories:
                 board.push(move)
             games.append(board) 
 
+            # Get the winner from the pgn string
+            winner = 'w' if current_game.headers["Result"] == "1-0" else 'b' if current_game.headers["Result"] == "0-1" else 'd'
+
             # Write the fen and winner to a csv file
             try:
                 for i in range(100):
