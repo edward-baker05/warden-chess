@@ -2,6 +2,7 @@ from time import perf_counter
 import chess
 from Players.human import Human
 from Players.mtcs_engine.mtcs_engine import MonteCarloEngine
+from Players.stockfish import Stockfish
 
 def display_board(board: chess.Board):
     for i, row in enumerate(board.unicode(invert_color=True).split("\n")):
@@ -56,13 +57,15 @@ def get_player_colour():
 def main():
     # user_fen = "r1b1k2r/ppp2pp1/2n1p3/1N1p3p/3Pqb2/1BP5/PP1RQP1P/2K2R2 b kq - 0 1"
     # board = chess.Board(user_fen)
-    board = chess.Board()
+    board = chess.Board("8/ppk1N3/q1p5/8/3Np2P/4P3/3K1r2/1R4r1 w - - 1 37")
 
     colour = get_player_colour()
     if colour == "w":
-        outcome = game(Human, MonteCarloEngine, board)
+        # outcome = game(Human, MonteCarloEngine, board)
+        outcome = game(Human, Stockfish, board)
     elif colour == "b":
-        outcome = game(MonteCarloEngine, Human, board)
+        # outcome = game(MonteCarloEngine, Human, board)
+        outcome = game(Stockfish, Human, board)
     else:
         outcome = game(MonteCarloEngine, MonteCarloEngine, board)
 
@@ -84,7 +87,7 @@ main()
 def test():
     from os import system, name
     
-    user_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    user_fen = "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1"
     total = 0
     
     for i in range(15):

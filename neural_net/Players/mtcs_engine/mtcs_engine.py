@@ -216,7 +216,7 @@ class MonteCarloEngine:
         # Search the MCTS tree and choose the child node with the highest UCB1 score as the next move
         chosen_node = self.search(root_node, self.model)
         move = chosen_node.board.peek()
-        print(f"AI made move: {move}")
+        print(f"AI made move: {move}. This was move number {list(root_node.board.legal_moves).index(move)} of {len(list(root_node.board.legal_moves))}")
         return move
 
 def board_to_tensor(board: chess.Board) -> np.ndarray:
@@ -240,33 +240,36 @@ def board_to_tensor(board: chess.Board) -> np.ndarray:
                     tensor[i][j][piece.piece_type + 5] = 1
     return tensor
     
-def normalise(n: float) -> float:
-    return (n + 4288) / (4283 + 4288)
-    
 def create_model() -> tf.keras.Model:
     """Create and return a TensorFlow model for evaluating chess positions.
 
     Returns:
     A TensorFlow model.
     """
-    
     model = tf.keras.Sequential()
-    model.add(tf.keras.layers.Conv2D(32, kernel_size=(3, 3),
-                     activation='relu',
-                     input_shape=(8, 8, 12)))
-    model.add(tf.keras.layers.Conv2D(64, (3, 3), activation='relu'))
+    model.add(tf.keras.layers.Conv2D(64, kernel_size=(3, 3), activation='relu', input_shape=(8, 8, 12)))
+    model.add(tf.keras.layers.BatchNormalization())
     model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
     model.add(tf.keras.layers.Dropout(0.25))
-    model.add(tf.keras.layers.Flatten())
-    model.add(tf.keras.layers.Dense(128, activation='relu'))
-    model.add(tf.keras.layers.Dropout(0.5))
-    model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
     
+    model.add(tf.keras.layers.Conv2D(128, kernel_size=(3, 3), activation='relu'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
+    model.add(tf.keras.layers.Dropout(0.25))
+
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(512, activation='relu'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Dropout(0.5))
+    model.add(tf.keras.layers.Dense(2, activation='softmax'))
     
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+    loss = tf.keras.losses.CategoricalCrossentropy(
+        from_logits=False, reduction=tf.keras.losses.Reduction.AUTO
+    )
     
     model.compile(optimizer=optimizer,
-                  loss='mean_squared_error',
+                  loss=loss,
                   metrics=['accuracy'])
     return model
 
@@ -278,7 +281,7 @@ def train() -> None:
     import pandas as pd
 
     # Load the dataset
-    data = pd.read_csv(r'neural_net\Players\mtcs_engine\Scores\sample_fen.csv', chunksize=100000)
+    data = pd.read_csv(r'neural_net\Players\mtcs_engine\sample_fen.csv', chunksize=1000000)
 
     # Define the neural network model
     model = create_model()
@@ -298,10 +301,13 @@ def train() -> None:
             for game in games:
                 board = chess.Board(game[0])
                 tensor = board_to_tensor(board=board)  # Convert the board position to an input tensor
-                try:
-                    score = normalise(int(game[1]))  # stockfish eval after 1s
-                except ValueError:
-                    continue
+                if game[1] == "w":
+                    score = [1, 0]
+                elif game[1] == "b":
+                    score = [0, 1]
+                else:
+                    score = [0, 0]
+
                 labels.append(score)
                 inputs.append(tensor)
 
