@@ -48,55 +48,6 @@ function onDrop(source, target) {
         promotion: 'q'
     })
 
-    // If the move is a pawn promotion, create a selection box with 4 options for promotion - none of this works at the moment
-    if (move.flags.includes('p')) {
-        var promotion = ''
-        var choices = ['Queen', 'Rook', 'Bishop', 'Knight']
-
-        // Create the selection box
-        var container = document.createElement('div')
-        container.classList.add('promotion-box')
-        for (var i = 0; i < choices.length; i++) {
-            var choice = document.createElement('div')
-            choice.classList.add('promotion-choice')
-            choice.innerHTML = choices[i]
-            container.appendChild(choice)
-        }
-        document.body.appendChild(container)
-
-        // Add event listeners to the promotion choices
-        var promotionChoices = document.querySelectorAll('.promotion-choice')
-        promotionChoices.forEach(function (choice) {
-            choice.addEventListener('click', function () {
-                // Remove the selection box
-                document.body.removeChild(container)
-
-                // Set the promotion based on the chosen option
-                switch (choice.innerHTML) {
-                    case 'Queen':
-                        promotion = 'q'
-                        break
-                    case 'Rook':
-                        promotion = 'r'
-                        break
-                    case 'Bishop':
-                        promotion = 'b'
-                        break
-                    case 'Knight':
-                        promotion = 'n'
-                        break
-                }
-
-                // Make the move with the chosen promotion
-                move = game.move({
-                    from: source,
-                    to: target,
-                    promotion: promotion
-                })
-            })
-        })
-    }
-
     // illegal move
     if (move === null) return 'snapback'
 
@@ -108,6 +59,8 @@ function onDrop(source, target) {
         popup.innerHTML = 'Game Over'
         document.body.appendChild(popup)
     }
+
+    getAIMove();
 }
 
 function aiMove(source, target) {
@@ -135,6 +88,8 @@ function aiMove(source, target) {
     }
 
     onSnapEnd();
+
+    // getAIMove();
 }
 
 function onMouseoverSquare(square, piece) {
@@ -184,7 +139,7 @@ function getColour() {
     var colourSelect = document.createElement('select')
     colourSelect.id = 'player-colour'
     var blankOption = document.createElement('option')
-    blankOption.innerHTML = ''
+    blankOption.innerHTML = 'Click here to choose your colour'
     colourSelect.appendChild(blankOption)
     var whiteOption = document.createElement('option')
     whiteOption.innerHTML = 'White'
@@ -201,6 +156,7 @@ function getColour() {
                 chooseColour('w')
             } else if (selectedColour === 'Black') {
                 chooseColour('b')
+                getAIMove();
             }
         } else {
             selectedColour = document.getElementById('player-colour').value
@@ -208,24 +164,23 @@ function getColour() {
                 playerColour = 'w'
             } else if (selectedColour === 'Black') {
                 playerColour = 'b'
+                getAIMove();
             }
         }
     })
+
+    select.remove(0);
 }
 
-// This is a stupidly old style of code - I need to update this #TODO
-$(function () {
-    $('a#getmove').on('click', function (e) {
-        console.log("Quering AI for next move...");
-        const data = game.fen();
-        e.preventDefault()
-        $.getJSON('/get_move', {fen: data},
-            function (response) {
-                const fen_result = response.result;
-                aiMove(fen_result[0], fen_result[1]);
-            });
-        return true;
-    });
-});
+function getAIMove() {
+    console.log("Quering AI for next move...");
+    const data = game.fen();
+    $.getJSON('/get_move', { fen: data },
+        function (response) {
+            const fen_result = response.result;
+            aiMove(fen_result[0], fen_result[1]);
+        });
+    return true;
+}
 
 getColour()

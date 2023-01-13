@@ -170,7 +170,7 @@ class MonteCarloEngine:
         if value is not None:
             return value
 
-        tensor = board_to_tensor(node.board).reshape(1, 8, 8, 12)
+        tensor = board_to_tensor(node.board)
         value = model.predict(tensor, verbose=0)
         print(value)
         exit()
