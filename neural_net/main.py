@@ -54,6 +54,26 @@ def get_player_colour():
 
     return colour
 
+def zobrist_hash(board: chess.Board) -> int:
+    # Create a dictionary to store the Zobrist hash values for each piece type and square
+    import random
+    
+    zobrist_keys = {}
+    random.seed(0)
+    for piece_type in chess.PIECE_TYPES:
+        zobrist_keys[piece_type] = {}
+        for square in chess.SQUARES:
+            zobrist_keys[piece_type][square] = random.getrandbits(32)
+    # Initialize the hash value to 0
+    hash_value = 0
+    # Iterate through each square on the board
+    for square in chess.SQUARES:
+        piece = board.piece_at(square)
+        if piece:
+            # XOR the hash value with the appropriate Zobrist key for the piece type and square
+            hash_value ^= zobrist_keys[piece.piece_type][square]
+    return hash_value
+
 def main():
     # user_fen = "r1b1k2r/ppp2pp1/2n1p3/1N1p3p/3Pqb2/1BP5/PP1RQP1P/2K2R2 b kq - 0 1"
     # board = chess.Board(user_fen)
@@ -82,14 +102,21 @@ def main():
 # user_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 # board = chess.Board(user_fen)
 
-main()
+if __name__ == "__main__":
+    # main()
+    pass
 
 def test():
     from os import system, name
+<<<<<<< HEAD
     
     user_fen = "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1"
+=======
+
+    user_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+>>>>>>> 1ac6a7251e618f01e60f42bb1c13e1be9eea932a
     total = 0
-    
+
     for i in range(15):
         board = chess.Board(user_fen)
         outcome = game(PositionalEngine, MaterialEngine, board)
@@ -124,3 +151,6 @@ def test():
     print(total)
 
 # test()
+board = chess.Board()
+hash_value = zobrist_hash(board)
+print(hash_value)
