@@ -1,4 +1,2 @@
-8/ppk1N3/q1p5/8/3Np2P/4P3/3K1r2/1R4r1 w - - 1 37
-d2c3
-a6c4
-c3c4
+rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+b1a3

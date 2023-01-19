@@ -170,18 +170,19 @@ class MonteCarloEngine:
         if value is not None:
             return value
 
-        tensor = board_to_tensor(node.board)
-        value = model.predict(tensor, verbose=0)
-        print(value)
-        exit()
+        tensor = board_to_tensor(node.board).reshape(1, 8, 8, 12)
+        value = model.predict(tensor, verbose=0)[0]
+
         if node.board.turn != self.colour:
-            value = -value
+            result = value[1]
+        else:
+            result = value[0]
 
         # Store the value in the transposition table
-        self.transposition_table.put(node.board, value)
+        self.transposition_table.put(node.board, result)
 
-        return value
-
+        return result
+ 
     def backpropagate(self, node: Node, value: float) -> None:
         """Backpropagate the evaluation value through the tree to update the visit and win counts for each node.
 
@@ -222,11 +223,11 @@ class MonteCarloEngine:
 def board_to_tensor(board: chess.Board) -> np.ndarray:
     """Convert the given board position to a tensor.
 
-    Parameters:
-    board: a chess.Board object representing the current board position.
+    Args:
+        board: A chess.Board object representing the current board position.
 
     Returns:
-    A numpy array representing the board position as a tensor.
+        A numpy array representing the board position as a tensor.
     """
     # Convert the board to a tensor
     tensor = np.zeros((8, 8, 12))
@@ -244,90 +245,128 @@ def create_model() -> tf.keras.Model:
     """Create and return a TensorFlow model for evaluating chess positions.
 
     Returns:
-    A TensorFlow model.
+        A TensorFlow model.
     """
     model = tf.keras.Sequential()
-    model.add(tf.keras.layers.Conv2D(64, kernel_size=(3, 3), activation='relu', input_shape=(8, 8, 12)))
+    model.add(tf.keras.layers.Conv2D(filters=128, kernel_size=3, padding='same', activation='relu', kernel_regularizer='l2',  input_shape=(8, 8, 12)))
     model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
-    model.add(tf.keras.layers.Dropout(0.25))
-    
-    model.add(tf.keras.layers.Conv2D(128, kernel_size=(3, 3), activation='relu'))
+    model.add(tf.keras.layers.Conv2D(filters=128, kernel_size=3, padding='same', activation='relu', kernel_regularizer='l2'))
     model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2)))
-    model.add(tf.keras.layers.Dropout(0.25))
+    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
+    model.add(tf.keras.layers.Dropout(rate=0.2))
+
+    model.add(tf.keras.layers.Conv2D(filters=256, kernel_size=3, padding='same', activation='relu', kernel_regularizer='l2'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Conv2D(filters=256, kernel_size=3, padding='same', activation='relu', kernel_regularizer='l2'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
+    model.add(tf.keras.layers.Dropout(rate=0.2))
+
+    model.add(tf.keras.layers.Conv2D(filters=512, kernel_size=3, padding='same', activation='relu', kernel_regularizer='l2'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Conv2D(filters=512, kernel_size=3, padding='same', activation='relu', kernel_regularizer='l2'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
+    model.add(tf.keras.layers.Dropout(rate=0.2))
 
     model.add(tf.keras.layers.Flatten())
-    model.add(tf.keras.layers.Dense(512, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=1024, activation='relu', kernel_regularizer='l2'))
     model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Dropout(0.5))
-    model.add(tf.keras.layers.Dense(2, activation='softmax'))
+    model.add(tf.keras.layers.Dropout(rate=0.2))
+    model.add(tf.keras.layers.Dense(units=512, activation='relu', kernel_regularizer='l2'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Dropout(rate=0.2))
+    model.add(tf.keras.layers.Dense(units=2, activation='softmax', kernel_regularizer='l2'))
     
-    optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
-    loss = tf.keras.losses.CategoricalCrossentropy(
-        from_logits=False, reduction=tf.keras.losses.Reduction.AUTO
-    )
+    optimiser = tf.keras.optimizers.Adam()
     
-    model.compile(optimizer=optimizer,
-                  loss=loss,
-                  metrics=['accuracy'])
+    model.compile(optimizer=optimiser, loss='categorical_crossentropy', metrics=['accuracy'])
+
     return model
 
 def train() -> None:
     """
     Train the TensorFlow model using the data in the `sample_fen.csv` file. The model is saved to the file `weights.h5` after training.
     """
-    import numpy as np
+    # This is only needed for training
     import pandas as pd
 
-    # Load the dataset
-    data = pd.read_csv(r'neural_net\Players\mtcs_engine\sample_fen.csv', chunksize=1000000)
-
-    # Define the neural network model
+    training_data = pd.read_csv(r'neural_net\Players\mtcs_engine\sample_fen.csv', chunksize=100000)
     model = create_model()
 
     try:
         model.load_weights(r"neural_net\Players\mtcs_engine\weights.h5")
+        print("Weights file found. Loading weights.")
     except FileNotFoundError:
-        pass
+        print("No weights file found. Training from scratch.")
 
     try:
-        for i, chunk in enumerate(data):
+        for cycle, chunk in enumerate(training_data):
             games = chunk.values.tolist()
+            if cycle <= 10:
+                continue
             # Preprocess the data
-            inputs = []
-            labels = []
+            positions = []
+            outcomes = []
 
             for game in games:
-                board = chess.Board(game[0])
-                tensor = board_to_tensor(board=board)  # Convert the board position to an input tensor
-                if game[1] == "w":
-                    score = [1, 0]
-                elif game[1] == "b":
-                    score = [0, 1]
+                position = game[0]
+                outcome = game[1]
+                
+                board = chess.Board(position)
+                board_as_tensor = board_to_tensor(board=board)
+                
+                if outcome == "w":
+                    one_hot_outcome = [1, 0]
+                elif outcome == "b":
+                    one_hot_outcome = [0, 1]
                 else:
-                    score = [0, 0]
+                    one_hot_outcome = [0, 0] 
 
-                labels.append(score)
-                inputs.append(tensor)
+                outcomes.append(one_hot_outcome)
+                positions.append(board_as_tensor)
 
-            inputs = np.array(inputs)
-            labels = np.array(labels)
+            positions = np.array(positions)
+            outcomes = np.array(outcomes)
 
-            # Train the model
-            model.fit(inputs, labels, epochs=50, batch_size=32)
-            print(f"Finished training cycle {i}")
+            model.fit(positions, outcomes, epochs=150, batch_size=64)
+            print(f"Finished training cycle {cycle}")
     except KeyboardInterrupt:
         pass
 
-    # Save the new model weights
     model.save_weights(r"neural_net\Players\mtcs_engine\weights.h5")
     print()
     print("Saved weights to disk")
+    
+def new_train():
+    file_path = tf.keras.utils.get_file(r"C:\Users\ed9ba\Documents\Coding\NEA\Warden\neural_net\Players\mtcs_engine\Scores\sample_fen.csv", "file:///C:/Users/ed9ba/Documents/Coding/NEA/Warden/neural_net/Players/mtcs_engine/sample_fen.csv")
+    fen_csv_ds = tf.data.experimental.make_csv_dataset(
+        file_path,
+        batch_size=10000,
+        label_name="fen",
+        num_epochs=1,
+        ignore_errors=True
+    )
+    outcome_csv_ds = tf.data.experimental.make_csv_dataset(
+        file_path,
+        batch_size=10000,
+        label_name="outcome",
+        num_epochs=1,
+        ignore_errors=True
+    )
+    
+    for positions, outcomes in zip(fen_csv_ds.take(1), outcome_csv_ds.take(1)):
+        for game, outcome in zip(positions[1], outcomes[1]):
+            fen = str(game.numpy())[2:-1]
+            winner = str(outcome.numpy())[2:-1]
+            print(fen, winner)
+            break
+        break
 
-def get_weights() -> None:
+def display_weights() -> None:
     """
-    Get the weights of the TensorFlow model. The model is created and the weights are loaded from the file `weights.h5`. The weights are then printed to the console.
+    Display the weights of the TensorFlow model. The model is created and the weights are loaded from the file `weights.h5`.
+    I'm not even sure if this is useful, but it's here if you want it.
     """
     model = create_model()
     model.load_weights(r"neural_net\Players\mtcs_engine\weights.h5")
@@ -336,5 +375,10 @@ def get_weights() -> None:
         print(weights)
 
 if __name__ == "__main__":
-    train() 
-    # get_weights()
+    new_train() 
+    # display_weights()
+  
+# TODO
+# - Probably rewrite board_to_tensor to take a FEN string rather than a board
+# - Potentially work on new training function (not high priority)
+# - Regenerate sample_fen.csv after I accidentally deleted it
