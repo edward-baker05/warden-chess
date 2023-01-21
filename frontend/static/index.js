@@ -66,11 +66,6 @@ function onDrop(source, target) {
 function aiMove(source, target) {
     removeGreySquares()
 
-    console.log(source);
-    console.log(target);
-    console.log(typeof (source));
-    console.log(typeof (target));
-
     // Make the AI move
     game.move({
         from: source,
@@ -117,7 +112,15 @@ function onMouseoutSquare(square, piece) {
 
 function onSnapEnd() {
     board.position(game.fen())
+    // Check if the game is in checkmate
+    if (game.in_checkmate() === true) {
+        var king_color = game.turn() === 'w' ? 'b' : 'w'
+        var kingSquare = game.king_position(king_color)
+        var kingElement = document.querySelector('.square-' + kingSquare)
+        kingElement.style.backgroundColor = 'red'
+    }
 }
+
 
 function chooseColour(colour) {
     playerColour = colour
