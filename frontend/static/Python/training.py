@@ -35,27 +35,26 @@ def train(nn_model: tf.keras.Model, engine: MonteCarloEngine, games_num: int=100
 def play_game(board: chess.Board, engine: MonteCarloEngine) -> tuple[list[np.ndarray], list[int]]:
     # Initialize the game result
     move_history = []
+    one_hot_outcome = [0, 0]
 
     # Play the game until it is over
     while not board.is_game_over():
         # Get the move from the engine
         move = engine.get_move(board)
-        move = (move[0] + move[1])
-        
+
         # Make the move on the board
-        board.push(chess.Move.from_uci(move))
+        board.push(move)
 
         # Add the position and the move to the game history
         move_history.append(board_to_tensor(board))
 
-    if board.outcome().result() == "1-0":
-        outcome = [1, 0]
-    elif board.outcome().result() == "0-1":
-        outcome = [0, 1]
-    else:
-        outcome = [0, 0]
+    if outcome := board.outcome() is not None:
+        if outcome == "1-0":
+            one_hot_outcome = [1, 0]
+        elif outcome == "0-1":
+            one_hot_outcome = [0, 1]
         
-    return move_history, outcome
+    return move_history, one_hot_outcome
 
 def create_model() -> tf.keras.Model:
     """Create and return a TensorFlow model for evaluating chess positions.
