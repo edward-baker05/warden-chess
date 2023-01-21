@@ -77,15 +77,15 @@ def zobrist_hash(board: chess.Board) -> int:
 def main():
     # user_fen = "r1b1k2r/ppp2pp1/2n1p3/1N1p3p/3Pqb2/1BP5/PP1RQP1P/2K2R2 b kq - 0 1"
     # board = chess.Board(user_fen)
-    board = chess.Board("8/ppk1N3/q1p5/8/3Np2P/4P3/3K1r2/1R4r1 w - - 1 37")
+    board = chess.Board()
 
     colour = get_player_colour()
     if colour == "w":
-        # outcome = game(Human, MonteCarloEngine, board)
-        outcome = game(Human, Stockfish, board)
+        outcome = game(Human, MonteCarloEngine, board)
+        # outcome = game(Human, Stockfish, board)
     elif colour == "b":
-        # outcome = game(MonteCarloEngine, Human, board)
-        outcome = game(Stockfish, Human, board)
+        outcome = game(MonteCarloEngine, Human, board)
+        # outcome = game(Stockfish, Human, board)
     else:
         outcome = game(MonteCarloEngine, MonteCarloEngine, board)
 
@@ -103,18 +103,13 @@ def main():
 # board = chess.Board(user_fen)
 
 if __name__ == "__main__":
-    # main()
-    pass
+    main()
+    # pass
 
 def test():
     from os import system, name
-<<<<<<< HEAD
-    
-    user_fen = "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1"
-=======
 
     user_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
->>>>>>> 1ac6a7251e618f01e60f42bb1c13e1be9eea932a
     total = 0
 
     for i in range(15):
@@ -151,6 +146,6 @@ def test():
     print(total)
 
 # test()
-board = chess.Board()
-hash_value = zobrist_hash(board)
-print(hash_value)
+# board = chess.Board()
+# hash_value = zobrist_hash(board)
+# print(hash_value)
