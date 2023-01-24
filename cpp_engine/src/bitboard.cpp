@@ -151,7 +151,6 @@ U64 Bitboard::getBishopAttacks(int square, U64 occupied) const
     return BishopAttacks[square][index];
 }
 
-
 U64 Bitboard::getRookAttacks(U64 pieces, U64 occupied) const
 {
     U64 result = 0;
@@ -166,7 +165,6 @@ U64 Bitboard::getRookAttacks(U64 pieces, U64 occupied) const
     return result;
 }
 
-
 U64 Bitboard::getRookAttacks(int square, U64 occupied) const
 {
     U64 mask = RookMasks[square];
@@ -174,4 +172,25 @@ U64 Bitboard::getRookAttacks(int square, U64 occupied) const
     U64 magic = RookMagics[square];
     int index = (int)((occ * magic) >> RookShifts[square]);
     return RookAttacks[square][index];
+}
+
+void Bitboard::clearBit(int square)
+{
+    pieces[WHITE] &= ~(1ull << square);
+    pieces[BLACK] &= ~(1ull << square);
+}
+
+void Bitboard::setBit(int square, int color)
+{
+    pieces[color] |= (1ull << square);
+}
+
+void Bitboard::removePiece(int piece, int color)
+{
+    pieces[color] &= ~(1ull << piece);
+}
+
+void Bitboard::addPiece(int piece, int color)
+{
+    pieces[color] |= (1ull << piece);
 }

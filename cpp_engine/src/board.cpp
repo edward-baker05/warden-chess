@@ -44,13 +44,38 @@ void Board::reset()
 void Board::makeMove(Move move)
 {
     moveList.push_back(move);
-    // Perform the move on the board
-    // ...
+    int from = move.from;
+    int to = move.to;
+    int capturedPiece = move.capturedPiece;
+    int promotedPiece = move.promotedPiece;
+    U64 fromBB = 1ull << from;
+    U64 toBB = 1ull << to;
+
+    // Move the piece to its new position
+    bb->clearBit(from);
+    bb->setBit(to, toMove);
+    if (promotedPiece != NO_PIECE) {
+        //If it was a promoted move, remove the pawn and add the promoted piece
+        bb->removePiece(PAWN, toMove);
+        bb->addPiece(promotedPiece, toMove);
+    }
+    if (capturedPiece != NO_PIECE) {
+        // If a piece was captured, remove it from the board
+        bb->removePiece(capturedPiece, ~toMove);
+    }
+
     // Update other variables
     toMove = ~toMove;
-    // ...
+    if (capturedPiece == NO_PIECE && getPiece(from) != PAWN) {
+        fiftyMoveCounter = 0;
+    }
+    else {
+        fiftyMoveCounter++;
+    }
+    fullMoveCounter++;
     Movegen::generateMoves(this);
 }
+
 
 void Board::unmakeMove()
 {
@@ -87,7 +112,6 @@ void Board::unmakeMove()
 
     moveList.pop_back();
 }
-
 
 bool Board::isCheck() const
 {
@@ -222,4 +246,12 @@ void Board::loadFEN(const std::string& fen)
 
 }
 
-
+int Board::getPiece(int square) const
+{
+    for (int piece = PAWN; piece <= KING; piece++) {
+        if (bb->getBit(square, piece)) {
+            return piece;
+        }
+    }
+    return NO_PIECE;
+}
