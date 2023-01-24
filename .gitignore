@@ -178,3 +178,4 @@ public
 *.sublime-workspace
 sftp-config.json
 Games
+*.csv

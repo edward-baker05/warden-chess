@@ -77,18 +77,21 @@ class Node:
         self.children.append(child)
         return child
 
-    def ucb1(self) -> float:
+    def ucb1(self, exploration_param=1.8):
         """Calculate and return the UCB1 score for the current node.
+
+        Args:
+        exploration_param (float): a parameter to control the balance between exploration and exploitation.
 
         Returns:
         The UCB1 score for the current node.
         """
         if self.visits == 0:
             return float('inf')
-        return self.value + math.sqrt(2 * math.log(self.parent.visits) / self.visits)
+        return self.value + exploration_param * math.sqrt(math.log(self.parent.visits) / self.visits)
 
 class MonteCarloEngine:
-    def __init__(self, colour: int=chess.WHITE, temperature: float=0.4, iterations: int=100000, max_depth: int=15) -> None:
+    def __init__(self, colour: int=chess.WHITE, temperature: float=0.4, iterations: int=10000, max_depth: int=15) -> None:
         """Initialize the Monte Carlo engine.
 
         Parameters:
@@ -97,28 +100,12 @@ class MonteCarloEngine:
         iterations: the number of iterations to run the Monte Carlo tree search.
         max_depth: the maximum depth to search in the tree.
         """
-        import os
-        # self.model = tf.keras.Sequential([
-        #     tf.keras.layers.Conv2D(64, (3, 3), activation='relu', input_shape=(8, 8, 12)),
-        #     tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
-        #     tf.keras.layers.Flatten(),
-        #     tf.keras.layers.Dense(128, activation='relu'),
-        #     tf.keras.layers.Dense(2, activation='softmax')
-        # ])
         self.model = create_model()
-        optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
-        self.model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
 
         self.colour = colour
         self.max_depth = max_depth
         self.temperature = temperature
         self.iterations = iterations
-
-        try:
-            self.model.load_weights(r"neural_net/Players/mtcs_engine/weights.h5")
-            print("Loaded weights from disk")
-        except:
-            print("No weights found on disk")
 
         # Create a transposition table
         self.transposition_table = TranspositionTable()
@@ -181,14 +168,23 @@ class MonteCarloEngine:
             return value
 
         tensor = board_to_tensor(node.board).reshape(1, 8, 8, 12)
-        value = float(model.predict(tensor, verbose=0)[0][0])
+        value = model.predict(tensor, verbose=0)[0]
+
         if node.board.turn != self.colour:
-            value = 1 - value
+            if self.colour == chess.WHITE:
+                result = value[1]
+            else:
+                result = value[0]
+        else:
+            if self.colour == chess.WHITE:
+                result = value[0]
+            else:
+                result = value[1]
 
         # Store the value in the transposition table
-        self.transposition_table.put(node.board, value)
+        self.transposition_table.put(node.board, result)
 
-        return value
+        return result
 
     def backpropagate(self, node: Node, value: float) -> None:
         """Backpropagate the evaluation value through the tree to update the visit and win counts for each node.
@@ -199,9 +195,9 @@ class MonteCarloEngine:
         """
         while node is not None:
             node.visits += 1
-            node.wins += value
+            if value > 0.5:
+                node.wins += 1
             node.value = node.wins / node.visits
-            value = 1 - value
             node = node.parent
 
     def get_move(self, board: chess.Board) -> chess.Move:
@@ -224,17 +220,68 @@ class MonteCarloEngine:
         # Search the MCTS tree and choose the child node with the highest UCB1 score as the next move
         chosen_node = self.search(root_node, self.model)
         move = chosen_node.board.peek()
-        print(f"AI made move: {move}")
+        print(f"AI made move: {move}. This was move number {list(root_node.board.legal_moves).index(move)} of {len(list(root_node.board.legal_moves))}")
         return move
+    
+def create_model() -> tf.keras.Model:
+    """Create and return a TensorFlow model for evaluating chess positions.
+
+    Returns:
+        A TensorFlow model.
+    """
+    # from os import getcwd
+    
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layers.Conv2D(filters=128, kernel_size=3, padding='same', activation='relu',  input_shape=(8, 8, 12)))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Conv2D(filters=128, kernel_size=3, padding='same', activation='relu'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
+    model.add(tf.keras.layers.Dropout(rate=0.2))
+
+    model.add(tf.keras.layers.Conv2D(filters=256, kernel_size=3, padding='same', activation='relu'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Conv2D(filters=256, kernel_size=3, padding='same', activation='relu'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
+    model.add(tf.keras.layers.Dropout(rate=0.2))
+
+    model.add(tf.keras.layers.Conv2D(filters=512, kernel_size=3, padding='same', activation='relu'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Conv2D(filters=512, kernel_size=3, padding='same', activation='relu'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
+    model.add(tf.keras.layers.Dropout(rate=0.2))
+
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(units=1024, activation='relu'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Dropout(rate=0.2))
+    model.add(tf.keras.layers.Dense(units=512, activation='relu'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Dropout(rate=0.2))
+    model.add(tf.keras.layers.Dense(units=2, activation='softmax'))
+    
+    optimiser = tf.keras.optimizers.Adam()
+    
+    model.compile(optimizer=optimiser, loss='categorical_crossentropy', metrics=['accuracy'])
+    
+    # path = getcwd()
+    # print(path)
+    try:
+        model.load_weights(r"static\Python\weights.h5")
+        print("Weights file found. Loading weights.")
+    except FileNotFoundError:
+        print("No weights file found. Training from scratch.")
+
+    return model
 
 def board_to_tensor(board: chess.Board) -> np.ndarray:
     """Convert the given board position to a tensor.
-
-    Parameters:
-    board: a chess.Board object representing the current board position.
-
+    Args:
+        board: A chess.Board object representing the current board position.
     Returns:
-    A numpy array representing the board position as a tensor.
+        A numpy array representing the board position as a tensor.
     """
     # Convert the board to a tensor
     tensor = np.zeros((8, 8, 12))
@@ -247,42 +294,3 @@ def board_to_tensor(board: chess.Board) -> np.ndarray:
                 else:
                     tensor[i][j][piece.piece_type + 5] = 1
     return tensor
-
-def create_model() -> tf.keras.Model:
-    """Create and return a TensorFlow model for evaluating chess positions.
-
-    Returns:
-    A TensorFlow model.
-    """
-    model = tf.keras.Sequential()
-    model.add(tf.keras.layers.Conv2D(filters=128, kernel_size=3, padding='same', activation='relu', input_shape=(8, 8, 12)))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Conv2D(filters=128, kernel_size=3, padding='same', activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
-    model.add(tf.keras.layers.Dropout(rate=0.4))
-
-    model.add(tf.keras.layers.Conv2D(filters=256, kernel_size=3, padding='same', activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Conv2D(filters=256, kernel_size=3, padding='same', activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
-    model.add(tf.keras.layers.Dropout(rate=0.4))
-
-    model.add(tf.keras.layers.Conv2D(filters=512, kernel_size=3, padding='same', activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Conv2D(filters=512, kernel_size=3, padding='same', activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
-    model.add(tf.keras.layers.Dropout(rate=0.4))
-
-    model.add(tf.keras.layers.Flatten())
-    model.add(tf.keras.layers.Dense(units=1024, activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Dropout(rate=0.4))
-    model.add(tf.keras.layers.Dense(units=512, activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Dropout(rate=0.4))
-    model.add(tf.keras.layers.Dense(units=2, activation='softmax'))
-
-    return model

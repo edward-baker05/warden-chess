@@ -11,10 +11,12 @@ def display_board():
 
 directory = os.fsencode(r"C:\Users\ed9ba\Documents\Coding\NEA\Warden\Games")
 
-# with open(r"../neural_net\Players\mtcs_engine\sample_fen.csv", "a", newline='') as f:
+with open(r"..\neural_net\Players\mtcs_engine\validation_fen.csv", "w", newline='') as f:
     for collection in reversed(os.listdir(directory)):
         try:
             filename = os.fsdecode(collection)
+            if '2019' not in filename:
+                continue
             pgn = open(filename)
 
             games = []
