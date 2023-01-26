@@ -5,6 +5,14 @@
 #include <iostream>
 #include <string>
 
+void UCI::init(Board* board, MoveGenerator* movegen, Search* search, Evaluator* eval) {
+    this->board = board;
+    this->movegen = movegen;
+    this->search = search;
+    this->eval = eval;
+    tt = new TranspositionTable(16);
+}
+
 void UCI::loop() {
     std::string input;
     while (std::getline(std::cin, input)) {

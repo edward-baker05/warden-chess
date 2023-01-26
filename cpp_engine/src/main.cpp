@@ -13,7 +13,7 @@ int main()
     Movegen movegen;
     Search search;
     Eval eval;
-    Uci uci;
+    UCI uci;
 
     // Initialize the chess engine
     uci.init(board, movegen, search, eval);

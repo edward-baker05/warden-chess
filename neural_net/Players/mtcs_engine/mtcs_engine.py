@@ -288,7 +288,7 @@ def train() -> None:
     training_data = pd.read_csv(r'neural_net\Players\mtcs_engine\sample_fen.csv', chunksize=65536)
     validation_data = pd.read_csv(r'neural_net\Players\mtcs_engine\validation_fen.csv', chunksize=2048)
     model = create_model()
-    completed_iterations = 9
+    completed_iterations = 11
     
     for _ in range(completed_iterations):
         training_positions, training_outcomes = process_data(next(training_data))
