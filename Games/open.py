@@ -9,13 +9,13 @@ engine = chess.engine.SimpleEngine.popen_uci(r"C:/Users/ed9ba/Documents/Coding/N
 
 directory = os.fsencode(r"C:/Users/ed9ba/Documents/Coding/NEA/Warden/Games")
 
-with open(r"training_data.csv", "w", newline='') as f:
+with open(r"training_data.csv", "a", newline='') as f:
     for collection in os.listdir(directory):
         try:
             filename = os.fsdecode(collection)
             if not filename.endswith(".pgn"): 
                 continue
-            pgn = open(filename)
+            pgn = open(f"Games/{filename}", encoding="utf-8-sig")
 
             games = []
             
@@ -39,7 +39,7 @@ with open(r"training_data.csv", "w", newline='') as f:
                             break
                         board.pop()
                         # Get the score from stockfish
-                        score = engine.analyse(board, chess.engine.Limit(time=0.1))['score'].white().score()
+                        score = engine.analyse(board, chess.engine.Limit(time=0.1))['score'].white().score(mate_score=10000)
                         writer.writerow([fen, score])
                 except IndexError:
                     pass

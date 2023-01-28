@@ -1,8 +1,8 @@
 from time import perf_counter
 import chess
 from Players.human import Human
-from Players.mtcs_engine.mtcs_engine import MonteCarloEngine
-from Players.stockfish import Stockfish
+from Players.mcts_engine.mcts_engine import MonteCarloEngine
+from Players.mcts_engine.mcts_clone import MonteCarloClone
 
 def display_board(board: chess.Board):
     for i, row in enumerate(board.unicode(invert_color=True).split("\n")):
@@ -36,13 +36,6 @@ def game(white, black, board: chess.Board) -> chess.Outcome:
             board.push(move)
             display_board(board)
             f.write(move.uci() + "\n")
-        # try:
-        #     player1.learn(board)
-        # except AttributeError:
-        #     try:
-        #         player2.learn(board)
-        #     except AttributeError:
-        #         return board.outcome()
     if outcome := board.outcome():
         return outcome
 
@@ -75,19 +68,15 @@ def zobrist_hash(board: chess.Board) -> int:
     return hash_value
 
 def main():
-    # user_fen = "r1b1k2r/ppp2pp1/2n1p3/1N1p3p/3Pqb2/1BP5/PP1RQP1P/2K2R2 b kq - 0 1"
-    # board = chess.Board(user_fen)
     board = chess.Board()
 
     colour = get_player_colour()
     if colour == "w":
         outcome = game(Human, MonteCarloEngine, board)
-        # outcome = game(Human, Stockfish, board)
     elif colour == "b":
         outcome = game(MonteCarloEngine, Human, board)
-        # outcome = game(Stockfish, Human, board)
     else:
-        outcome = game(MonteCarloEngine, MonteCarloEngine, board)
+        outcome = game(MonteCarloEngine, MonteCarloClone, board)
 
     termination = outcome.termination
     if termination.value == 1:
@@ -99,53 +88,5 @@ def main():
         print(f"Draw by {termination.name}")
     input()
 
-# user_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-# board = chess.Board(user_fen)
-
 if __name__ == "__main__":
     main()
-    # pass
-
-def test():
-    from os import system, name
-
-    user_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-    total = 0
-
-    for i in range(15):
-        board = chess.Board(user_fen)
-        outcome = game(PositionalEngine, MaterialEngine, board)
-        termination = outcome.termination
-        if termination.value == 1:
-            if outcome.winner:
-                total += 1
-                # Clear terminal
-                system('cls' if name == 'nt' else 'clear')
-                print(f"Positional (white) wins in game {i}! Total score is: {total}")
-            else:
-                total -= 1
-                # Clear terminal
-                system('cls' if name == 'nt' else 'clear')
-                print(f"Material (black) wins in game {i}! Total score is: {total}")
-
-    for i in range(15):
-        board = chess.Board(user_fen)
-        outcome = game(MaterialEngine, PositionalEngine, board)
-        termination = outcome.termination
-        if termination.value == 1:
-            if outcome.winner:
-                total -= 1
-                # Clear terminal
-                system('cls')
-                print(f"Material (white) wins in game {i+15}! Total score is: {total}")
-            else:
-                total += 1
-                # Clear terminal
-                system('cls')
-                print(f"Positional (black) wins in game {i+15}! Total score is: {total}")
-    print(total)
-
-# test()
-# board = chess.Board()
-# hash_value = zobrist_hash(board)
-# print(hash_value)
