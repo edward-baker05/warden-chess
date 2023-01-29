@@ -9,7 +9,7 @@ class StockfishEngine:
 
     def get_move(self, board: chess.Board) -> Optional[tuple[str, str]]:
         self.engine.set_fen_position(board.fen())
-        move = self.engine.get_best_move()
+        move = self.engine.get_evaluation().get('bestmove')
         if move is None:
             return None
         start = move[:2]

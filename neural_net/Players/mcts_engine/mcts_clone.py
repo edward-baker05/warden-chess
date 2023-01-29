@@ -4,6 +4,7 @@ import tensorflow as tf
 import numpy as np
 from Players.mcts_engine.transposition import TranspositionTable
 from Players.mcts_engine.node import Node
+from Players.mcts_engine.model import Model
 
 class MonteCarloClone:
     def __init__(self, colour: int=chess.WHITE, temperature: float=0.2, iterations: int=50000, max_depth: int=25) -> None:
@@ -15,17 +16,19 @@ class MonteCarloClone:
             iterations: the number of iterations to run the Monte Carlo tree search.
             max_depth: the maximum depth to search in the tree.
         """
-        self.model = create_model()
+        self.model = Model()
+        self.model.create_model()
 
         self.colour = colour
         self.max_depth = max_depth
         self.temperature = temperature
         self.iterations = iterations
+        self.game_phase = 'opening'
 
         # Create a transposition table
         self.transposition_table = TranspositionTable()
 
-    def search(self, node: Node, model: tf.keras.Model) -> Node:
+    def search(self, node: Node) -> Node:
         """Perform a Monte Carlo tree search from the given node.
 
         Args:
@@ -37,7 +40,7 @@ class MonteCarloClone:
         """
         for _ in range(self.iterations):
             leaf_node = self.select_leaf(node)
-            value = self.evaluate(leaf_node, model)
+            value = self.evaluate(leaf_node)
             self.backpropagate(leaf_node, value)
 
         # Calculate the UCB1 scores for each child
@@ -67,7 +70,7 @@ class MonteCarloClone:
                 return node
         return node
 
-    def evaluate(self, node: Node, model: tf.keras.Model) -> float:
+    def evaluate(self, node: Node) -> float:
         """Evaluate the given node using the TensorFlow model.
 
         Args:
@@ -89,8 +92,11 @@ class MonteCarloClone:
                 return -value
             return value
 
+        self.game_phase = self.model.load_phase_weights(node.board)
+        working_model = self.model.get_model()
+        
         tensor = board_to_tensor(node.board).reshape(1, 8, 8, 12)
-        value = model.__call__(tensor, training=False).numpy()[0][0]
+        value = working_model.__call__(tensor, training=False).numpy()[0][0]
 
         # Store the value in the transposition table
         self.transposition_table.put(node.board, value)
@@ -132,100 +138,11 @@ class MonteCarloClone:
             root_node.add_child(move)
 
         # Search the MCTS tree and choose the child node with the highest UCB1 score as the next move
-        chosen_node = self.search(root_node, self.model)
+        chosen_node = self.search(root_node)
         move = chosen_node.board.peek()
         print(f"AI made move: {move}. This was move number {list(root_node.board.legal_moves).index(move)} of {len(list(root_node.board.legal_moves))}")
         return move
-
-def create_model() -> tf.keras.Model:
-    """Create and return a TensorFlow model for evaluating chess positions.
-
-    Returns:
-        A TensorFlow model.
-    """
-    model = tf.keras.Sequential()
-    model.add(tf.keras.layers.Conv2D(filters=128, kernel_size=3, padding='same', activation='relu',  input_shape=(8, 8, 12)))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Conv2D(filters=128, kernel_size=3, padding='same', activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
-    model.add(tf.keras.layers.Dropout(rate=0.2))
-
-    model.add(tf.keras.layers.Conv2D(filters=256, kernel_size=3, padding='same', activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Conv2D(filters=256, kernel_size=3, padding='same', activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
-    model.add(tf.keras.layers.Dropout(rate=0.2))
-
-    model.add(tf.keras.layers.Conv2D(filters=512, kernel_size=3, padding='same', activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Conv2D(filters=512, kernel_size=3, padding='same', activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.MaxPool2D(pool_size=2))
-    model.add(tf.keras.layers.Dropout(rate=0.2))
-
-    model.add(tf.keras.layers.Flatten())
-    model.add(tf.keras.layers.Dense(units=1024, activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Dropout(rate=0.2))
-    model.add(tf.keras.layers.Dense(units=512, activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
-    model.add(tf.keras.layers.Dropout(rate=0.2))
-    model.add(tf.keras.layers.Dense(units=1))
-
-    optimiser = tf.keras.optimizers.Adam()
-    loss = tf.keras.losses.MeanSquaredError()
-
-    model.compile(optimizer=optimiser, loss=loss, metrics=['accuracy'])
-    model.load_weights("C:/Users/ed9ba/Documents/Coding/NEA/Warden/neural_net/Players/mcts_engine/weights_clone.h5")
-    print("Model created.")
-
-    return model
-
-def train() -> None:
-    """
-    Train the TensorFlow model using the data in the `sample_fen.csv` file. The model is saved to the file `weights.h5` after training.
-    """
-    import csv
-
-    training_positions = []
-    training_scores = []
-
-    with open("Games/training_data.csv", "r") as f:
-        reader = csv.reader(f)
-        data = list(reader)
-
-    for position in data:
-        try:
-            score = int(position[1]) / 100
-        except ValueError:
-            continue
-
-        board = chess.Board(position[0])
-        board_as_tensor = board_to_tensor(board)
- 
-        training_positions.append(board_as_tensor)
-        training_scores.append(score)
-
-    model = create_model()
-
-    try:
-        print("Starting training...")
-        model.fit(np.array(training_positions),
-                  np.array(training_scores),
-                  epochs=50, 
-                  batch_size=32,
-                  shuffle=True,
-                  )
-    except KeyboardInterrupt:
-        pass
-
-    print()
-    print("Training complete.")
-    model.save_weights("neural_net/Players/mcts_engine/weights_clone.h5")
-    print("Saved weights to disk.")
-
+    
 def board_to_tensor(board: chess.Board) -> np.ndarray:
     """Convert the given board position to a tensor.
 
@@ -246,6 +163,3 @@ def board_to_tensor(board: chess.Board) -> np.ndarray:
                 else:
                     tensor[i][j][piece.piece_type + 5] = 1
     return tensor
-
-if __name__ == "__main__":
-    train()

@@ -50,7 +50,7 @@ def get_player_colour():
 def zobrist_hash(board: chess.Board) -> int:
     # Create a dictionary to store the Zobrist hash values for each piece type and square
     import random
-    
+
     zobrist_keys = {}
     random.seed(0)
     for piece_type in chess.PIECE_TYPES:
