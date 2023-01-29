@@ -3,9 +3,9 @@ import chess
 
 class Model:
     def __init__(self, phase: str='opening') -> None:
-        self.__model = self.create_model(phase)
+        self.create_model(phase)
         self.__phase = phase
-        
+
     def create_model(self, phase: 'str'='opening') -> tf.keras.Model:
         """Create and return a TensorFlow model for evaluating chess positions.
 
@@ -72,8 +72,12 @@ class Model:
         game_phase = self.__get_phase(board)
         if game_phase != self.__phase:
             self.__phase = game_phase
-            self.__model.load_weights(phase[game_phase])
-        
+            try:
+                print(f"Loading weights for phase: {game_phase}")
+                self.__model.load_weights(phase[game_phase])
+            except FileNotFoundError:
+                print("No weights exist for this phase.")
+
         return game_phase
     
     def get_model(self) -> tf.keras.Model:

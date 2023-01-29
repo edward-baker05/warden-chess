@@ -8,18 +8,23 @@ def train() -> None:
     Train the TensorFlow model using the data in the `sample_fen.csv` file. The model is saved to the file `weights.h5` after training.
     """
     model = Model()
-    model.create_model()
     
     for phase in ["opening", "mid", "end"]:
+        print(f"Training for phase: {phase}")
         training_positions, training_scores = get_phase_data(phase)
         current_model = model.get_model()
-        current_model.load_weights(f"C:/Users/ed9ba/Documents/Coding/NEA/Warden/neural_net/Players/mcts_engine/weights_{phase}.h5")
+
+        try:
+            current_model.load_weights(f"C:/Users/ed9ba/Documents/Coding/NEA/Warden/neural_net/Players/mcts_engine/weights_{phase}.h5")
+        except FileNotFoundError:
+            print("No weights exist for this phase.")
+        current_model.save_weights(f"C:/Users/ed9ba/Documents/Coding/NEA/Warden/neural_net/Players/mcts_engine/weights_{phase}.h5")
 
         try:
             print("Starting training...")
             current_model.fit(np.array(training_positions),
                              np.array(training_scores),
-                             epochs=50, 
+                             epochs=10, 
                              batch_size=32,
                              shuffle=True,
                              )
@@ -66,9 +71,6 @@ def get_phase_data(phase: str) -> tuple[list[list[str]], list[list[str]]]:
             continue
             
         board = chess.Board(position[1])
-        print(board.fen())
-        print(score)
-        exit()
         board_as_tensor = board_to_tensor(board)
 
         training_positions.append(board_as_tensor)
@@ -96,3 +98,6 @@ def board_to_tensor(board: chess.Board) -> np.ndarray:
                 else:
                     tensor[i][j][piece.piece_type + 5] = 1
     return tensor
+
+if __name__ == "__main__":
+    train()
