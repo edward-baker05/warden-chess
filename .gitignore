@@ -180,3 +180,4 @@ sftp-config.json
 Games
 *.csv
 *.exe
+.DS_Store
