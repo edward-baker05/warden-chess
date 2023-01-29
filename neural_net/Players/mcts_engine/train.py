@@ -61,11 +61,14 @@ def get_phase_data(phase: str) -> tuple[list[list[str]], list[list[str]]]:
     
     for position in data:
         try:
-            score = int(position[1]) / 100
+            score = int(position[2]) / 100
         except ValueError:
             continue
-
-        board = chess.Board(position[0])
+            
+        board = chess.Board(position[1])
+        print(board.fen())
+        print(score)
+        exit()
         board_as_tensor = board_to_tensor(board)
 
         training_positions.append(board_as_tensor)
