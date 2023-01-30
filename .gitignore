@@ -181,3 +181,4 @@ Games
 *.txt
 *.exe
 .DS_Store
+neural_net/Players/game.txt
