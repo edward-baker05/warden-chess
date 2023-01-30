@@ -9,7 +9,7 @@ def index():
 
 @app.route('/get_move', methods=['POST', 'GET'])
 def get_move():
-    from static.Python.mtcs_engine import MonteCarloEngine
+    from static.Python.mcts import MonteCarloEngine
     fen = request.args.get('fen')
     engine = MonteCarloEngine()
     board = chess.Board(fen)
