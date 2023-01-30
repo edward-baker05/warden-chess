@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template
+from static.Python.mcts import MonteCarloEngine
 import chess
 
 app = Flask(__name__)
@@ -9,7 +10,6 @@ def index():
 
 @app.route('/get_move', methods=['POST', 'GET'])
 def get_move():
-    from static.Python.mcts import MonteCarloEngine
     fen = request.args.get('fen')
     engine = MonteCarloEngine()
     board = chess.Board(fen)
