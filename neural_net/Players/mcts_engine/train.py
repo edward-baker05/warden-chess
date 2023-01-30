@@ -8,7 +8,7 @@ def train() -> None:
     Train the TensorFlow model using the data in the `sample_fen.csv` file. The model is saved to the file `weights.h5` after training.
     """
     model = Model()
-    phases_to_train = ["opening"]
+    phases_to_train = ["opening", "mid", "end"]
     
     for phase in phases_to_train:
         print(f"Training for phase: {phase}")
@@ -25,7 +25,7 @@ def train() -> None:
             print("Starting training...")
             current_model.fit(np.array(training_positions),
                              np.array(training_scores),
-                             epochs=25, 
+                             epochs=100, 
                              batch_size=16,
                              shuffle=True,
                              )

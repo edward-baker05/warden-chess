@@ -6,8 +6,9 @@ from Players.mcts_engine.transposition import TranspositionTable
 from Players.mcts_engine.node import Node
 from Players.mcts_engine.model import Model
 
+
 class MonteCarloEngine:
-    def __init__(self, colour: int=chess.WHITE, temperature: float=0.2, iterations: int=50000, max_depth: int=25) -> None:
+    def __init__(self, colour: int = chess.WHITE, temperature: float = 0.2, iterations: int = 50000, max_depth: int = 25) -> None:
         """Initialize the Monte Carlo engine.
 
         Args:
@@ -94,7 +95,7 @@ class MonteCarloEngine:
 
         self.game_phase = self.model.load_phase_weights(node.board)
         working_model = self.model.get_model()
-        
+
         tensor = board_to_tensor(node.board).reshape(1, 8, 8, 12)
         value = working_model.__call__(tensor, training=False).numpy()[0][0]
 
@@ -102,7 +103,7 @@ class MonteCarloEngine:
         self.transposition_table.put(node.board, value)
 
         if node.board.turn != self.colour:
-                return -value
+            return -value
         return value
 
     def backpropagate(self, node: Node, value: float) -> None:
@@ -130,14 +131,13 @@ class MonteCarloEngine:
         Returns:
             A chess.Move object representing the best move for the given board position.
         """
-        if self.in_opening:
+        if self.in_opening is True:
             with chess.polyglot.open_reader("baron30.bin") as reader:
                 move = reader.get(board)
                 if move:
-                    move = move.move
-                    return move
-                print("No longer in opening phase of game.")
-                self.model.load_phase_weights(board, 'mid')
+                    return move.move
+                print("No longer in opening prep.")
+                self.model.load_phase_weights(board)
                 self.in_opening = False
 
         # Create a root node for the MCTS tree
@@ -150,9 +150,11 @@ class MonteCarloEngine:
         # Search the MCTS tree and choose the child node with the highest UCB1 score as the next move
         chosen_node = self.search(root_node)
         move = chosen_node.board.peek()
-        print(f"AI made move: {move}. This was move number {list(root_node.board.legal_moves).index(move)} of {len(list(root_node.board.legal_moves))}")
+        print(
+            f"AI made move: {move}. This was move number {list(root_node.board.legal_moves).index(move)} of {len(list(root_node.board.legal_moves))}")
         return move
-    
+
+
 def board_to_tensor(board: chess.Board) -> np.ndarray:
     """Convert the given board position to a tensor.
 
