@@ -1,12 +1,12 @@
 from __future__ import annotations
 import chess
-import tensorflow as tf
+import chess.polyglot
 import numpy as np
 from Players.mcts_engine.transposition import TranspositionTable
 from Players.mcts_engine.node import Node
 from Players.mcts_engine.model import Model
 
-class MonteCarloClone:
+class MonteCarloEngine:
     def __init__(self, colour: int=chess.WHITE, temperature: float=0.2, iterations: int=50000, max_depth: int=25) -> None:
         """Initialize the Monte Carlo engine.
 
@@ -17,13 +17,13 @@ class MonteCarloClone:
             max_depth: the maximum depth to search in the tree.
         """
         self.model = Model()
-        self.model.create_model()
 
         self.colour = colour
         self.max_depth = max_depth
         self.temperature = temperature
         self.iterations = iterations
         self.game_phase = 'opening'
+        self.in_opening = True
 
         # Create a transposition table
         self.transposition_table = TranspositionTable()
@@ -130,6 +130,16 @@ class MonteCarloClone:
         Returns:
             A chess.Move object representing the best move for the given board position.
         """
+        if self.in_opening:
+            with chess.polyglot.open_reader("baron30.bin") as reader:
+                move = reader.get(board)
+                if move:
+                    move = move.move
+                    return move
+                print("No longer in opening phase of game.")
+                self.model.load_phase_weights(board, 'mid')
+                self.in_opening = False
+
         # Create a root node for the MCTS tree
         root_node = Node(board)
 

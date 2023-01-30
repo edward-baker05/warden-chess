@@ -1,8 +1,7 @@
 from time import perf_counter
 import chess
 from Players.human import Human
-from Players.mcts_engine.mcts_engine import MonteCarloEngine
-from Players.mcts_engine.mcts_clone import MonteCarloClone
+from Players.mcts_engine.mcts import MonteCarloEngine
 
 def display_board(board: chess.Board):
     for i, row in enumerate(board.unicode(invert_color=True).split("\n")):
@@ -76,7 +75,7 @@ def main():
     elif colour == "b":
         outcome = game(MonteCarloEngine, Human, board)
     else:
-        outcome = game(MonteCarloEngine, MonteCarloClone, board)
+        outcome = game(MonteCarloEngine, MonteCarloEngine, board)
 
     termination = outcome.termination
     if termination.value == 1:
