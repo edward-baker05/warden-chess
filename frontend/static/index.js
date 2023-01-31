@@ -1,5 +1,5 @@
 var board = null
-var game = new Chess()
+var game = new Chess("8/7p/8/8/3k4/2R5/8/K3R3 w - - 0 1")
 var whiteSquareGrey = '#a9a9a9'
 var blackSquareGrey = '#696969'
 var playerColour = null
@@ -83,8 +83,6 @@ function aiMove(source, target) {
     }
 
     onSnapEnd();
-
-    // getAIMove();
 }
 
 function onMouseoverSquare(square, piece) {
@@ -121,17 +119,16 @@ function onSnapEnd() {
     }
 }
 
-
 function chooseColour(colour) {
     playerColour = colour
     var config = {
         draggable: true,
-        position: 'start',
+        position: game.fen(),
         onDragStart: onDragStart,
         onDrop: onDrop,
         onMouseoutSquare: onMouseoutSquare,
         onMouseoverSquare: onMouseoverSquare,
-        onSnapEnd: onSnapEnd
+        onSnapEnd: onSnapEnd,
     }
 
     board = Chessboard('myBoard', config)
@@ -159,7 +156,6 @@ function getColour() {
                 chooseColour('w')
             } else if (selectedColour === 'Black') {
                 chooseColour('b')
-                getAIMove();
             }
         } else {
             selectedColour = document.getElementById('player-colour').value
@@ -167,12 +163,26 @@ function getColour() {
                 playerColour = 'w'
             } else if (selectedColour === 'Black') {
                 playerColour = 'b'
-                getAIMove();
             }
         }
     })
 
     select.remove(0);
+    createAI(playerColour);
+    if (game.turn() !== playerColour) {
+        getAIMove();
+    }
+}
+
+function create_ai(playerColour) {
+    console.log("Creating AI...");
+    const data = playerColour;
+    $.getJSON('/create_ai', { colour: data },
+        function (response) {
+            const result = response.result;
+            console.log(result);
+        });
+    return true;
 }
 
 function getAIMove() {

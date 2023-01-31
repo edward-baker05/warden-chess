@@ -25,7 +25,7 @@ def train() -> None:
             print("Starting training...")
             current_model.fit(np.array(training_positions),
                              np.array(training_scores),
-                             epochs=10, 
+                             epochs=50, 
                              batch_size=64,
                              shuffle=True,
                              )
