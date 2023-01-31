@@ -92,21 +92,20 @@ class MonteCarloEngine:
                 value = float('inf')  
         elif len(node.board.piece_map()) <= 5:
             print("Probing tablebase...")
-            with chess.syzygy.open_tablebase("static/Python/tablebase") as tablebase:
-                outcome = tablebase.get_wdl(node.board)
-                match outcome:
-                    case 2:
-                        value = float('inf')
-                    case 1:
-                        value = 100
-                    case 0:
-                        value = 0
-                    case -1:
-                        value = -100
-                    case -2:
-                        value = -float('inf')
-                    case _:
-                        pass
+            tb = chess.syzygy.open_tablebase("static/Python/tablebase")
+            outcome = tb.get_wdl(chess.Board("8/2K5/4B3/3N4/8/8/4k3/8 b - - 0 1"))
+            tb.close()
+            match outcome:
+                case 2:
+                    value = float('inf')
+                case 1:
+                    value = 100
+                case 0:
+                    value = 0
+                case -1:
+                    value = -100
+                case -2:
+                    value = -float('inf')
         else:
             self.game_phase = self.model.load_phase_weights(node.board)
             working_model = self.model.get_model()
@@ -165,12 +164,20 @@ class MonteCarloEngine:
         for move in root_node.board.legal_moves:
             root_node.add_child(move)
 
+        for child in root_node.children:
+            if len(child.board.piece_map()) <= 5:
+                tablebase = chess.syzygy.open_tablebase("static/Python/tablebase")
+                outcome = tablebase.get_wdl(child.board)
+                tablebase.close()
+                if outcome == 2:
+                    return child.board.peek()
+        
         # Search the MCTS tree and choose the child node with the highest UCB1 score as the next move
         chosen_node = self.search(root_node)
         move = chosen_node.board.peek()
         print(f"AI made move: {move}. This was move number {list(root_node.board.legal_moves).index(move)} of {len(list(root_node.board.legal_moves))}")
         return move
-    
+
 def board_to_tensor(board: chess.Board) -> np.ndarray:
     """Convert the given board position to a tensor.
 
