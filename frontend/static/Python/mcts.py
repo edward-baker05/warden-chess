@@ -6,10 +6,11 @@ from model import Model
 from node import Node
 import chess
 import chess.polyglot
+import chess.syzygy
 import numpy as np
 
 class MonteCarloEngine:
-    def __init__(self, colour: int=chess.WHITE, temperature: float=0.2, iterations: int=50000, max_depth: int=25) -> None:
+    def __init__(self, colour: int=chess.BLACK, temperature: float=0.35, iterations: int=50000, max_depth: int=25) -> None:
         """Initialize the Monte Carlo engine.
 
         Args:
@@ -39,7 +40,7 @@ class MonteCarloEngine:
 
         Returns:
             The selected child Node object to continue the search from.
-        """
+        """            
         for _ in range(self.iterations):
             leaf_node = self.select_leaf(node)
             value = self.evaluate(leaf_node)
@@ -82,23 +83,36 @@ class MonteCarloEngine:
         Returns:
             The evaluation of the node as a float value.
         """
+        # Check if the position is in the transposition table
+        value = self.transposition_table.get(node.board)
+        
         # Check if it is checkmate
         if node.board.is_checkmate():
             if node.board.turn != self.colour:
-                return float('inf')
-
-        # Check if the position is in the transposition table
-        value = self.transposition_table.get(node.board)
-        if value is not None:
-            if node.board.turn != self.colour:
-                return -value
-            return value
-
-        self.game_phase = self.model.load_phase_weights(node.board)
-        working_model = self.model.get_model()
+                value = float('inf')  
+        elif len(node.board.piece_map()) <= 5:
+            print("Probing tablebase...")
+            with chess.syzygy.open_tablebase("static/Python/tablebase") as tablebase:
+                outcome = tablebase.get_wdl(node.board)
+                match outcome:
+                    case 2:
+                        value = float('inf')
+                    case 1:
+                        value = 100
+                    case 0:
+                        value = 0
+                    case -1:
+                        value = -100
+                    case -2:
+                        value = -float('inf')
+                    case _:
+                        pass
+        else:
+            self.game_phase = self.model.load_phase_weights(node.board)
+            working_model = self.model.get_model()
         
-        tensor = board_to_tensor(node.board).reshape(1, 8, 8, 12)
-        value = working_model.__call__(tensor, training=False).numpy()[0][0]
+            tensor = board_to_tensor(node.board).reshape(1, 8, 8, 12)
+            value = working_model.__call__(tensor, training=False).numpy()[0][0]
 
         # Store the value in the transposition table
         self.transposition_table.put(node.board, value)

@@ -1,5 +1,6 @@
 var board = null
 var game = new Chess()
+game.load("8/2K5/4B3/3N4/8/8/4k3/8 b - - 0 1")
 var whiteSquareGrey = '#a9a9a9'
 var blackSquareGrey = '#696969'
 var playerColour = null
@@ -121,7 +122,6 @@ function onSnapEnd() {
     }
 }
 
-
 function chooseColour(colour) {
     playerColour = colour
     var config = {
@@ -131,7 +131,8 @@ function chooseColour(colour) {
         onDrop: onDrop,
         onMouseoutSquare: onMouseoutSquare,
         onMouseoverSquare: onMouseoverSquare,
-        onSnapEnd: onSnapEnd
+        onSnapEnd: onSnapEnd,
+        position: game.fen()
     }
 
     board = Chessboard('myBoard', config)

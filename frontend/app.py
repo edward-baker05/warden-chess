@@ -11,7 +11,6 @@ def index():
 @app.route('/get_move', methods=['POST', 'GET'])
 def get_move():
     fen = request.args.get('fen')
-    engine = MonteCarloEngine()
     board = chess.Board(fen)
     move = engine.get_move(board)
     start = move.uci()[:2]
@@ -32,6 +31,7 @@ def get_move():
 """
 
 if __name__ == '__main__':
+    engine = MonteCarloEngine()
     try:
         app.run()
     except:
