@@ -3,39 +3,44 @@ import numpy as np
 from model import Model
 import chess
 
+
 def train() -> None:
     """
     Train the TensorFlow model using the data in the `sample_fen.csv` file. The model is saved to the file `weights.h5` after training.
     """
     model = Model()
     phases_to_train = ["opening"]
-    
+
     for phase in phases_to_train:
         print(f"Training for phase: {phase}")
         training_positions, training_scores = get_phase_data(phase)
         current_model = model.get_model()
 
         try:
-            current_model.load_weights(f"C:/Users/ed9ba/Documents/Coding/NEA/Warden/neural_net/Players/mcts_engine/weights_{phase}.h5")
+            current_model.load_weights(
+                f"C:/Users/ed9ba/Documents/Coding/NEA/Warden/neural_net/Players/mcts_engine/weights_{phase}.h5")
         except FileNotFoundError:
             print("No weights exist for this phase.")
-        current_model.save_weights(f"C:/Users/ed9ba/Documents/Coding/NEA/Warden/neural_net/Players/mcts_engine/weights_{phase}.h5")
+        current_model.save_weights(
+            f"C:/Users/ed9ba/Documents/Coding/NEA/Warden/neural_net/Players/mcts_engine/weights_{phase}.h5")
 
         try:
             print("Starting training...")
             current_model.fit(np.array(training_positions),
-                             np.array(training_scores),
-                             epochs=25, 
-                             batch_size=16,
-                             shuffle=True,
-                             )
+                              np.array(training_scores),
+                              epochs=25,
+                              batch_size=16,
+                              shuffle=True,
+                              )
         except KeyboardInterrupt:
             pass
 
         print()
         print("Training complete.")
-        current_model.save_weights(f"C:/Users/ed9ba/Documents/Coding/NEA/Warden/neural_net/Players/mcts_engine/weights_{phase}.h5")
+        current_model.save_weights(
+            f"C:/Users/ed9ba/Documents/Coding/NEA/Warden/neural_net/Players/mcts_engine/weights_{phase}.h5")
         print("Saved weights to disk.")
+
 
 def get_phase_data(phase: str) -> tuple[list[list[str]], list[list[str]]]:
     """Get the data for the given phase.
@@ -61,16 +66,16 @@ def get_phase_data(phase: str) -> tuple[list[list[str]], list[list[str]]]:
                 data = list(reader)
         case _:
             raise ValueError("Invalid phase.")
-    
+
     training_positions = []
     training_scores = []
-    
+
     for position in data:
         try:
             score = int(position[2]) / 100
         except ValueError:
             continue
-            
+
         board = chess.Board(position[1])
         board_as_tensor = board_to_tensor(board)
 
@@ -78,6 +83,7 @@ def get_phase_data(phase: str) -> tuple[list[list[str]], list[list[str]]]:
         training_scores.append(score)
 
     return training_positions, training_scores
+
 
 def board_to_tensor(board: chess.Board) -> np.ndarray:
     """Convert the given board position to a tensor.
@@ -99,6 +105,7 @@ def board_to_tensor(board: chess.Board) -> np.ndarray:
                 else:
                     tensor[i][j][piece.piece_type + 5] = 1
     return tensor
+
 
 if __name__ == "__main__":
     train()

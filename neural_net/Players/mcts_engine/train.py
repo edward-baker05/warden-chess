@@ -25,8 +25,8 @@ def train() -> None:
             print("Starting training...")
             current_model.fit(np.array(training_positions),
                              np.array(training_scores),
-                             epochs=100, 
-                             batch_size=16,
+                             epochs=50, 
+                             batch_size=64,
                              shuffle=True,
                              )
         except KeyboardInterrupt:

@@ -131,15 +131,17 @@ class MonteCarloEngine:
         Returns:
             A chess.Move object representing the best move for the given board position.
         """
-        print(self.in_opening)
-        if self.in_opening:
-            with chess.polyglot.open_reader("neural_net/Players/mcts_engine/polyglot") as reader:
+        if self.in_opening is True:
+            with chess.polyglot.open_reader("neural_net/Players/mcts_engine/polyglot/baron30.bin") as reader:
                 move = reader.get(board)
                 if move:
                     return move.move
                 print("No longer in opening prep.")
                 self.model.load_phase_weights(board)
                 self.in_opening = False
+                
+        if len(board.piece_map()) < 5:
+            
 
         # Create a root node for the MCTS tree
         root_node = Node(board)
