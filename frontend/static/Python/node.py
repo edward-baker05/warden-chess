@@ -38,7 +38,7 @@ class Node:
         self.children.append(child)
         return child
 
-    def ucb1(self, exploration_param=0.2):
+    def ucb1(self, exploration_param=0.65):
         """Calculate and return the UCB1 score for the current node.
 
         Args:

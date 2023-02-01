@@ -11,17 +11,17 @@ def index():
 @app.route('/get_move', methods=['POST', 'GET'])
 def get_move():
     fen = request.args.get('fen')
+    player_colour = request.args.get('colour')
+    if player_colour == 'w':
+        engine_colour = chess.BLACK
+    else:
+        engine_colour = chess.WHITE
+    engine = MonteCarloEngine(engine_colour)
     board = chess.Board(fen)
-    move = ENGINE.get_move(board)
+    move = engine.get_move(board)
     start = move.uci()[:2]
     end = move.uci()[2:4]
     return jsonify(result=(start, end))
-
-@app.route('/create_ai', methods=['POST'])
-def create_ai():
-    global ENGINE
-    ENGINE = MonteCarloEngine()
-    return jsonify(result="success")
 
 """
 @app.route('/get_move', methods=['POST', 'GET'])
@@ -37,5 +37,4 @@ def get_move():
 """
 
 if __name__ == '__main__':
-    ENGINE = MonteCarloEngine()
     app.run()

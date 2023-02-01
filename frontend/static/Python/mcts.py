@@ -11,7 +11,7 @@ import chess.syzygy
 import numpy as np
 
 class MonteCarloEngine:
-    def __init__(self, colour: int=chess.BLACK, temperature: float=0.35, iterations: int=50000, max_depth: int=25) -> None:
+    def __init__(self, colour: int=chess.BLACK, temperature: float=0.5, iterations: int=25000, max_depth: int=20) -> None:
         """Initialize the Monte Carlo engine.
 
         Args:
@@ -22,6 +22,8 @@ class MonteCarloEngine:
         """
         self.model = Model()
 
+        print(f"Creating AI of colour {colour}...")
+        
         self.colour = colour
         self.max_depth = max_depth
         self.temperature = temperature
@@ -84,6 +86,7 @@ class MonteCarloEngine:
         Returns:
             The evaluation of the node as a float value.
         """
+        print("Evaluating node...")
         # Check if the position is in the transposition table
         value = self.transposition_table.get(node.board)
         
@@ -107,12 +110,12 @@ class MonteCarloEngine:
                     value = -100
                 case -2:
                     value = -float('inf')
-        else:
+        elif value is None:
             self.game_phase = self.model.load_phase_weights(node.board)
             working_model = self.model.get_model()
         
             tensor = board_to_tensor(node.board).reshape(1, 8, 8, 12)
-            value = working_model.__call__(tensor, training=False).numpy()[0][0]
+            value = working_model.__call__(tensor).numpy()[0][0]
 
         # Store the value in the transposition table
         self.transposition_table.put(node.board, value)
@@ -155,12 +158,7 @@ class MonteCarloEngine:
                 self.in_opening = False
                 print(self.in_opening)
                 print("No longer in opening preparation phase.")
-<<<<<<< HEAD
                 self.model.load_phase_weights(board)
-                
-=======
-                self.model.load_phase_weights(board, 'mid')
->>>>>>> e8fd87154ce31f020d594a161941f40e175dbe17
 
         # Create a root node for the MCTS tree
         root_node = Node(board)
@@ -190,6 +188,7 @@ class MonteCarloEngine:
         # Search the MCTS tree and choose the child node with the highest UCB1 score as the next move
         chosen_node = self.search(root_node)
         move = chosen_node.board.peek()
+        print("########## Move chosen ##########")
         print(f"AI made move: {move}. This was move number {list(root_node.board.legal_moves).index(move)} of {len(list(root_node.board.legal_moves))}")
         return move
 
