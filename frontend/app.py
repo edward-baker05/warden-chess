@@ -31,10 +31,9 @@ def get_move():
     engine = StockfishEngine()
     board = chess.Board(fen)
     move = engine.get_move(board)
-    start = move.uci()[:2]
-    end = move.uci()[2:4]
+    start = move[:2]
+    end = move[2:4]
     return jsonify(result=(start, end))
 """
-
 if __name__ == '__main__':
     app.run()
