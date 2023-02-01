@@ -1,5 +1,5 @@
 var board = null
-var game = new Chess("8/7p/8/8/3k4/2R5/8/K3R3 w - - 0 1")
+var game = new Chess("8/7P/8/8/3K4/2r5/8/k3r3 w - - 0 1")
 var whiteSquareGrey = '#a9a9a9'
 var blackSquareGrey = '#696969'
 var playerColour = null
@@ -168,10 +168,6 @@ function getColour() {
     })
 
     select.remove(0);
-    createAI(playerColour);
-    if (game.turn() !== playerColour) {
-        getAIMove();
-    }
 }
 
 function create_ai(playerColour) {
@@ -197,3 +193,4 @@ function getAIMove() {
 }
 
 getColour()
+console.log(playerColour);

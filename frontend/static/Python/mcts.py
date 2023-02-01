@@ -1,4 +1,5 @@
 from __future__ import annotations
+from random import shuffle
 import sys
 sys.path.append("static/Python/")
 from transposition import TranspositionTable
@@ -146,7 +147,7 @@ class MonteCarloEngine:
             A chess.Move object representing the best move for the given board position.
         """
         if self.in_opening:
-            with chess.polyglot.open_reader("static/Python/baron30.bin") as reader:
+            with chess.polyglot.open_reader("static/Python/polyglot/baron30.bin") as reader:
                 move = reader.get(board)
                 if move:
                     move = move.move
@@ -155,7 +156,6 @@ class MonteCarloEngine:
                 print(self.in_opening)
                 print("No longer in opening preparation phase.")
                 self.model.load_phase_weights(board, 'mid')
-                
 
         # Create a root node for the MCTS tree
         root_node = Node(board)
@@ -163,15 +163,25 @@ class MonteCarloEngine:
         # Add the legal moves for the position represented by the root node as children of the root node
         for move in root_node.board.legal_moves:
             root_node.add_child(move)
+        shuffle(root_node.children)
 
         for child in root_node.children:
             if len(child.board.piece_map()) <= 5:
+                print("Probing tablebase...")
                 tablebase = chess.syzygy.open_tablebase("static/Python/tablebase")
                 outcome = tablebase.get_wdl(child.board)
                 tablebase.close()
-                if outcome == 2:
-                    return child.board.peek()
-        
+                if self.colour == chess.WHITE:
+                    target = 2
+                else:
+                    target = -2
+                print(outcome)
+                if outcome == target:
+                    move = child.board.peek()
+                    print(f"Playing move {move} to win the game from tablebase")
+                    return move
+
+        print("Getting move from neural network...")
         # Search the MCTS tree and choose the child node with the highest UCB1 score as the next move
         chosen_node = self.search(root_node)
         move = chosen_node.board.peek()
