@@ -56,7 +56,7 @@ class Model:
 
         self.__model = model
     
-    def load_phase_weights(self, board: chess.Board, set_phase: Optional[str]=None) -> str:
+    def load_phase_weights(self, board: chess.Board) -> str:
         """Check the weights of the given board position.
 
         Args:
@@ -66,11 +66,7 @@ class Model:
         Returns:
             A float representing the weight of the given board position.
         """
-        if set_phase:
-            game_phase = set_phase
-            self.__phase = set_phase
-        else:
-            game_phase = self.__get_phase(board)
+        game_phase = self.__get_phase(board)
 
         phase = {'opening': 'neural_net/Players/mcts_engine/weights_opening.h5', 
                 'mid': 'neural_net/Players/mcts_engine/weights_mid.h5', 

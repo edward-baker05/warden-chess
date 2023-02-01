@@ -141,7 +141,7 @@ class MonteCarloEngine:
                 self.in_opening = False
                 print(self.in_opening)
                 print("No longer in opening preparation phase.")
-                self.model.load_phase_weights(board, 'mid')
+                self.model.load_phase_weights(board)
                 
 
         # Create a root node for the MCTS tree
