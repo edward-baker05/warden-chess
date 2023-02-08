@@ -182,5 +182,6 @@ Games
 *.exe
 *.rtbw
 *.rtbz
+*.csv
 .DS_Store
 neural_net/Players/game.txt
