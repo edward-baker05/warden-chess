@@ -1,0 +1,1 @@
+current_model = model.get_model()

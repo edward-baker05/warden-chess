@@ -1,6 +1,7 @@
 from typing import Optional
 import chess
 
+
 class TranspositionTable:
     def __init__(self) -> None:
         """Initialize an empty dictionary to store the transposition table."""

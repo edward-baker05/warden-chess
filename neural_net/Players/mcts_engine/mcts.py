@@ -132,7 +132,7 @@ class MonteCarloEngine:
             A chess.Move object representing the best move for the given board position.
         """
         if self.in_opening is True:
-            with chess.polyglot.open_reader("neural_net/Players/mcts_engine/polyglot/baron30.bin") as reader:
+            with chess.polyglot.open_reader("neural_net/Players/mcts_engine/polyglot/DCbook_large.bin") as reader:
                 move = reader.get(board)
                 if move:
                     return move.move

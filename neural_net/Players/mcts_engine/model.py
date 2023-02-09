@@ -3,66 +3,35 @@ import tensorflow as tf
 import chess
 
 class Model:
-    def __init__(self, phase: str='opening') -> None:
-        self.create_model(phase)
+    def __init__(self, model_type: str, phase: str='opening') -> None:
+        self.create_model(model_type, phase)
         self.__phase = phase
 
-    def create_model(self, phase: 'str'='opening'):
+    def create_model(self, model_type: str, phase: str='opening'):
         """Create and return a TensorFlow model for evaluating chess positions.
-
         Returns:
             A TensorFlow model.
         """
-        model = tf.keras.Sequential()
-        model.add(tf.keras.layers.Conv2D(filters=1024, kernel_size=3, padding='same', activation='relu',  input_shape=(8, 8, 12)))
-        model.add(tf.keras.layers.BatchNormalization())
-        model.add(tf.keras.layers.Conv2D(filters=1024, kernel_size=3, padding='same', activation='relu'))
-        model.add(tf.keras.layers.BatchNormalization())
-        model.add(tf.keras.layers.MaxPool2D(pool_size=2))
-        model.add(tf.keras.layers.Dropout(rate=0.2))
+        if model_type == "complex_large":
+            from models.complex_large import create
+        elif model_type == "complex_small":
+            from models.complex_small import create
+        elif model_type == "simple_large":
+            from models.simple_large import create
+        elif model_type == "simple_small":
+            from models.simple_small import create
+        else:
+            raise ValueError("Invalid model name")
 
-        model.add(tf.keras.layers.Conv2D(filters=2056, kernel_size=3, padding='same', activation='relu'))
-        model.add(tf.keras.layers.BatchNormalization())
-        model.add(tf.keras.layers.Conv2D(filters=2056, kernel_size=3, padding='same', activation='relu'))
-        model.add(tf.keras.layers.BatchNormalization())
-        model.add(tf.keras.layers.MaxPool2D(pool_size=2))
-        model.add(tf.keras.layers.Dropout(rate=0.2))
-
-        model.add(tf.keras.layers.Conv2D(filters=4098, kernel_size=3, padding='same', activation='relu'))
-        model.add(tf.keras.layers.BatchNormalization())
-        model.add(tf.keras.layers.Conv2D(filters=4098, kernel_size=3, padding='same', activation='relu'))
-        model.add(tf.keras.layers.BatchNormalization())
-        model.add(tf.keras.layers.MaxPool2D(pool_size=2))
-        model.add(tf.keras.layers.Dropout(rate=0.2))
-
-        model.add(tf.keras.layers.Flatten())
-        model.add(tf.keras.layers.Dense(units=8096, activation='relu'))
-        model.add(tf.keras.layers.BatchNormalization())
-        model.add(tf.keras.layers.Dropout(rate=0.2))
-        model.add(tf.keras.layers.Dense(units=4098, activation='relu'))
-        model.add(tf.keras.layers.BatchNormalization())
-        model.add(tf.keras.layers.Dropout(rate=0.2))
-        model.add(tf.keras.layers.Dense(units=1))
-
-        optimiser = tf.keras.optimizers.Adam()
-        loss = tf.keras.losses.MeanSquaredError()
-
-        model.compile(optimizer=optimiser, loss=loss, metrics=['accuracy'])
-        try:
-            model.load_weights(f"C:/Users/ed9ba/Documents/Coding/NEA/Warden/neural_net/Players/mcts_engine/weights_{phase}.h5")
-        except FileNotFoundError:
-            print("No weights file found. Creating new model.")
-        print("Model created.")
+        model = create()
 
         self.__model = model
     
     def load_phase_weights(self, board: chess.Board) -> str:
         """Check the weights of the given board position.
-
         Args:
             board: A chess.Board object representing the current board position.
             model: A TensorFlow model.
-
         Returns:
             A float representing the weight of the given board position.
         """
@@ -83,7 +52,6 @@ class Model:
     
     def get_model(self) -> tf.keras.Model:
         """Get the model.
-
         Returns:
             A TensorFlow model.
         """
@@ -91,10 +59,8 @@ class Model:
 
     def __get_phase(self, board: chess.Board) -> str:
         """Get the current phase of the game.
-
         Args:
             board: A chess.Board object representing the current board position.
-
         Returns:
             A string representing the current phase of the game.
         """

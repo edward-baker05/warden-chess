@@ -3,8 +3,9 @@ from typing import Optional
 import math
 import chess
 
+
 class Node:
-    def __init__(self, board: chess.Board, parent: Optional[Node]=None) -> None:
+    def __init__(self, board: chess.Board, parent: Optional[Node] = None) -> None:
         """Initialize a node in the Monte Carlo tree.
 
         Parameters:

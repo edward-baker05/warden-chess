@@ -39,10 +39,8 @@ def train() -> None:
 
 def get_phase_data(phase: str) -> tuple[list[list[str]], list[list[str]]]:
     """Get the data for the given phase.
-
     Args:
         phase: A string representing the phase of the game.
-
     Returns:
         A list of lists representing the data for the given phase.
     """
@@ -81,10 +79,8 @@ def get_phase_data(phase: str) -> tuple[list[list[str]], list[list[str]]]:
 
 def board_to_tensor(board: chess.Board) -> np.ndarray:
     """Convert the given board position to a tensor.
-
     Args:
         board: A chess.Board object representing the current board position.
-
     Returns:
         A numpy array representing the board position as a tensor.
     """
