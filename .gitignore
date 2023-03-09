@@ -177,7 +177,7 @@ public
 *.sublime-project
 *.sublime-workspace
 sftp-config.json
-Games
+Games/
 *.txt
 *.exe
 *.rtbw

@@ -46,26 +46,6 @@ def get_player_colour():
 
     return colour
 
-def zobrist_hash(board: chess.Board) -> int:
-    # Create a dictionary to store the Zobrist hash values for each piece type and square
-    import random
-
-    zobrist_keys = {}
-    random.seed(0)
-    for piece_type in chess.PIECE_TYPES:
-        zobrist_keys[piece_type] = {}
-        for square in chess.SQUARES:
-            zobrist_keys[piece_type][square] = random.getrandbits(32)
-    # Initialize the hash value to 0
-    hash_value = 0
-    # Iterate through each square on the board
-    for square in chess.SQUARES:
-        piece = board.piece_at(square)
-        if piece:
-            # XOR the hash value with the appropriate Zobrist key for the piece type and square
-            hash_value ^= zobrist_keys[piece.piece_type][square]
-    return hash_value
-
 def main():
     board = chess.Board()
 

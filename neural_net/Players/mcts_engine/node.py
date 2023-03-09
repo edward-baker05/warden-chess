@@ -1,12 +1,15 @@
 from __future__ import annotations
-from typing import Optional
+
 import math
+from typing import Optional
+
 import chess
 
 
 class Node:
     def __init__(self, board: chess.Board, parent: Optional[Node] = None) -> None:
-        """Initialize a node in the Monte Carlo tree.
+        """
+        Initialize a node in the Monte Carlo tree.
 
         Parameters:
         board: a chess.Board object representing the current board position.
@@ -25,7 +28,8 @@ class Node:
             self.depth = 0
 
     def add_child(self, move: chess.Move) -> Node:
-        """Add a child node to the current node by making a move on the board.
+        """
+        Add a child node to the current node by making a move on the board.
 
         Parameters:
         move: a chess.Move object representing the move to make on the board.
@@ -40,7 +44,8 @@ class Node:
         return child
 
     def ucb1(self, exploration_param=0.2):
-        """Calculate and return the UCB1 score for the current node.
+        """
+        Calculate and return the UCB1 score for the current node.
 
         Args:
             exploration_param (float): a parameter to control the balance between exploration and exploitation.

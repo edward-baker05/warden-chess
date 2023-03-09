@@ -1,4 +1,5 @@
 from typing import Optional
+
 import chess
 
 
@@ -8,7 +9,8 @@ class TranspositionTable:
         self.table = {}
 
     def get(self, board: chess.Board) -> Optional[float]:
-        """Look up the board position in the transposition table and return the value if it exists.
+        """
+        Look up the board position in the transposition table and return the value if it exists.
 
         Parameters:
         board: a chess.Board object representing the current board position.

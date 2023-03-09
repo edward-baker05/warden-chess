@@ -46,15 +46,16 @@ class Model:
         optimiser = tf.keras.optimizers.Adam()
         loss = tf.keras.losses.MeanSquaredError()
 
-        model.compile(optimizer=optimiser, loss=loss, metrics=['accuracy'])
+        model.compile(optimizer=optimiser, loss=loss, metrics=['mse'])
         try:
-            model.load_weights(f"C:/Users/ed9ba/Documents/Coding/NEA/Warden/neural_net/Players/mcts_engine/weights_{phase}.h5")
+            model.load_weights(f"C:/Users/ed9ba/Documents/Coding/NEA/Warden/frontend/static/Python/weights_full_copy.h5")
+            print("Weights loaded.")
         except FileNotFoundError:
             print("No weights file found. Creating new model.")
         print("Model created.")
 
         self.__model = model
-    
+
     def load_phase_weights(self, board: chess.Board) -> str:
         """Check the weights of the given board position.
 

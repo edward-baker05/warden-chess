@@ -86,7 +86,6 @@ class MonteCarloEngine:
         Returns:
             The evaluation of the node as a float value.
         """
-        print("Evaluating node...")
         # Check if the position is in the transposition table
         value = self.transposition_table.get(node.board)
         
@@ -97,7 +96,7 @@ class MonteCarloEngine:
         elif len(node.board.piece_map()) <= 5:
             print("Probing tablebase...")
             tb = chess.syzygy.open_tablebase("static/Python/tablebase")
-            outcome = tb.get_wdl(chess.Board("8/2K5/4B3/3N4/8/8/4k3/8 b - - 0 1"))
+            outcome = tb.get_wdl(node.board)
             tb.close()
             match outcome:
                 case 2:
@@ -121,7 +120,9 @@ class MonteCarloEngine:
         self.transposition_table.put(node.board, value)
 
         if node.board.turn != self.colour:
-                return -value
+            print("Inverting value...")
+            return -value
+        print("Not inverting value...")
         return value
 
     def backpropagate(self, node: Node, value: float) -> None:
@@ -150,7 +151,7 @@ class MonteCarloEngine:
             A chess.Move object representing the best move for the given board position.
         """
         if self.in_opening:
-            with chess.polyglot.open_reader("static/Python/polyglot/baron30.bin") as reader:
+            with chess.polyglot.open_reader("static/Python/polyglot/gm2600.bin") as reader:
                 move = reader.get(board)
                 if move:
                     move = move.move
@@ -187,6 +188,7 @@ class MonteCarloEngine:
         print("Getting move from neural network...")
         # Search the MCTS tree and choose the child node with the highest UCB1 score as the next move
         chosen_node = self.search(root_node)
+        print(chosen_node.board.fen)
         move = chosen_node.board.peek()
         print("########## Move chosen ##########")
         print(f"AI made move: {move}. This was move number {list(root_node.board.legal_moves).index(move)} of {len(list(root_node.board.legal_moves))}")

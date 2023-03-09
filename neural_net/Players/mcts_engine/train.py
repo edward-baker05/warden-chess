@@ -1,80 +1,76 @@
-import csv
-import numpy as np
-from model import Model
-import chess
+from datetime import datetime
 
-def train() -> None:
+import chess
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+
+tf.get_logger().setLevel('WARNING')
+
+def train(model_type: str, data: tuple[list[list[str]], list[list[str]]], epochs: int) -> None:
     """
     Train the TensorFlow model using the data in the `sample_fen.csv` file. The model is saved to the file `weights.h5` after training.
     """
-    model = Model()
-    phases_to_train = ["opening", "mid", "end"]
     
-    for phase in phases_to_train:
-        print(f"Training for phase: {phase}")
-        training_positions, training_scores = get_phase_data(phase)
-        current_model = model.get_model()
+    training_positions, training_scores = data
+    
+    if model_type == "complex_large":
+        from models.complex_large import create_model
+    elif model_type == "complex_small":
+        from models.complex_small import create_model
+    elif model_type == "simple_large":
+        from models.simple_large import create_model
+    elif model_type == "simple_small":
+        from models.simple_small import create_model
+    elif model_type == "optimal":
+        from models.optimal import create_model
+    else:
+        raise ValueError("Invalid model name")
+    
+    model = create_model()
+    print(model.summary())
 
-        try:
-            current_model.load_weights(f"C:/Users/ed9ba/Documents/Coding/NEA/Warden/neural_net/Players/mcts_engine/weights_{phase}.h5")
-        except FileNotFoundError:
-            print("No weights exist for this phase.")
-        current_model.save_weights(f"C:/Users/ed9ba/Documents/Coding/NEA/Warden/neural_net/Players/mcts_engine/weights_{phase}.h5")
+    try:
+        print("############################################\nStarting training...\n############################################")
+        start_time = datetime.now()
+        model.fit(np.array(training_positions),
+                            np.array(training_scores),
+                            epochs=epochs, 
+                            batch_size=128,
+                            shuffle=True,
+                            )
+        print(f"Training took {datetime.now() - start_time} seconds.")
+    except KeyboardInterrupt:
+        pass
 
-        try:
-            print("Starting training...")
-            current_model.fit(np.array(training_positions),
-                             np.array(training_scores),
-                             epochs=50, 
-                             batch_size=64,
-                             shuffle=True,
-                             )
-        except KeyboardInterrupt:
-            pass
+    print("\nTraining complete.")
+    model.save_weights(f"neural_net/Players/mcts_engine/models/{model_type}.h5")
+    print("Saved weights to disk.")
 
-        print()
-        print("Training complete.")
-        current_model.save_weights(f"C:/Users/ed9ba/Documents/Coding/NEA/Warden/neural_net/Players/mcts_engine/weights_{phase}.h5")
-        print("Saved weights to disk.")
-
-def get_phase_data(phase: str) -> tuple[list[list[str]], list[list[str]]]:
+def get_data() -> tuple[list[list[str]], list[list[str]]]:
     """Get the data for the given phase.
     Args:
         phase: A string representing the phase of the game.
     Returns:
         A list of lists representing the data for the given phase.
     """
-    match phase:
-        case 'opening':
-            with open("Games/training_data_opening.csv", "r") as f:
-                reader = csv.reader(f)
-                data = list(reader)
-        case 'mid':
-            with open("Games/training_data_mid.csv", "r") as f:
-                reader = csv.reader(f)
-                data = list(reader)
-        case 'end':
-            with open("Games/training_data_end.csv", "r") as f:
-                reader = csv.reader(f)
-                data = list(reader)
-        case _:
-            raise ValueError("Invalid phase.")
+    data = pd.read_csv("Games/training_data_full.csv").values.tolist()
     
     training_positions = []
     training_scores = []
     
     for position in data:
         try:
-            score = int(position[2]) / 100
+            score = int(position[1]) / 10
         except ValueError:
             continue
-            
-        board = chess.Board(position[1])
+        
+        board = chess.Board(position[0])
         board_as_tensor = board_to_tensor(board)
 
         training_positions.append(board_as_tensor)
         training_scores.append(score)
-
+    
     return training_positions, training_scores
 
 def board_to_tensor(board: chess.Board) -> np.ndarray:
@@ -97,4 +93,11 @@ def board_to_tensor(board: chess.Board) -> np.ndarray:
     return tensor
 
 if __name__ == "__main__":
-    train()
+    data = get_data()
+    # models = ["simple_small", "simple_large", "complex_small", "complex_large"]
+    # epoch_counts = [134, 58, 48, 36]
+    models = ["optimal"]
+    epoch_counts = [38]
+    for model, epoch_count in zip(models, epoch_counts):
+        train(model, data, epoch_count)
+        input("Press to proceed to next model...")
