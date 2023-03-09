@@ -177,12 +177,15 @@ public
 *.sublime-project
 *.sublime-workspace
 sftp-config.json
+
+# Extra
 Games/
 *.txt
 *.exe
 *.rtbw
 *.rtbz
-*.csv
+**.csv
 .DS_Store
 neural_net/Players/game.txt
 Games/*.csv
+**.txt
