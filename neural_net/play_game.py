@@ -5,6 +5,7 @@ def display_board(board: chess.Board):
     for i, row in enumerate(board.unicode(invert_color=True).split("\n")):
         print(f"{8-i} {row}")
     print("  a b c d e f g h")
+    print(f"Move number {board.fullmove_number}")
     print()
 
 def get_move(board: chess.Board, player) -> chess.Move:
@@ -15,15 +16,15 @@ def get_move(board: chess.Board, player) -> chess.Move:
         move = get_move(board, player)
     return move
 
-def play_game(player1: str, player2: str, game_number: int) -> int:
-    player1 = MonteCarloEngine(chess.WHITE, player1)
-    player2 = MonteCarloEngine(chess.BLACK, player2)
+def play_game(white: str, black: str, game_number: int) -> int:
+    player1 = MonteCarloEngine(chess.WHITE, white)
+    player2 = MonteCarloEngine(chess.BLACK, black)
     board = chess.Board()
 
     display_board(board)
     
-    with open(r"neural_net\Players\game.txt", "w") as f:
-        f.write(board.fen() + "\n")
+    with open(f"neural_net/Players/game_{game_number}.txt", "w") as file:
+        file.write(f"{white} vs {black}\n")
         while not board.outcome():
             if board.turn == chess.WHITE:
                 move = player1.get_move(board)
@@ -31,4 +32,11 @@ def play_game(player1: str, player2: str, game_number: int) -> int:
                 move = player2.get_move(board)
             board.push(move)
             display_board(board)
-            f.write(move.uci() + "\n")
+            file.write(move.uci() + "\n")
+        file.write(board.outcome().result() + "\n")
+    
+    if not (outcome := board.outcome()):
+        return -1
+    if outcome.winner == chess.WHITE:
+        return 0
+    return 1

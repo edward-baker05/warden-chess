@@ -1,5 +1,8 @@
 from random import shuffle
-from neural_net.play_game import play_game
+from play_game import play_game
+from tensorflow import get_logger
+
+get_logger().setLevel('ERROR')
 
 def generate_tournament():
     teams = ['simple_small', 'simple_large', 'complex_small', 'complex_large']
@@ -35,3 +38,4 @@ if __name__ == '__main__':
     matches, teams = generate_tournament()
     display(matches)
     scores = run_tournament(matches, teams)
+    print(scores)

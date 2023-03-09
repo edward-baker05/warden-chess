@@ -4,11 +4,10 @@ import chess.polyglot
 import numpy as np
 from Players.mcts_engine.transposition import TranspositionTable
 from Players.mcts_engine.node import Node
-from Players.mcts_engine.model import Model
 
 
 class MonteCarloEngine:
-    def __init__(self, colour: int = chess.WHITE, temperature: float = 0.2, iterations: int = 50000, max_depth: int = 25) -> None:
+    def __init__(self, colour: int, model_type: str, temperature: float = 0.2, iterations: int = 50000, max_depth: int = 25) -> None:
         """
         Initialize the Monte Carlo engine.
 
@@ -18,16 +17,33 @@ class MonteCarloEngine:
             iterations: the number of iterations to run the Monte Carlo tree search.
             max_depth: the maximum depth to search in the tree.
         """
-        self.__model = Model()
+        self.__model = self.__create_model(model_type)
 
         self.__colour = colour
         self.__max_depth = max_depth
         self.__temperature = temperature
         self.__iterations = iterations
-        self.__in_opening = True
+        self.__in_opening = False
 
         # Create a transposition table
         self.transposition_table = TranspositionTable()
+        
+    def __create_model(self, model_type: str) -> Model:
+        match model_type:
+            case "simple_small":
+                from Players.mcts_engine.models.simple_small import create_model
+            case "simple_large":
+                from Players.mcts_engine.models.simple_large import create_model
+            case "complex_small":
+                from Players.mcts_engine.models.complex_small import create_model
+            case "complex_large":
+                from Players.mcts_engine.models.complex_large import create_model
+            case "optimal":
+                from Players.mcts_engine.models.optimal import create_model
+            case _:
+                raise ValueError("Invalid model name")
+            
+        return create_model()
 
     def __search(self, node: Node) -> Node:
         """
@@ -96,7 +112,7 @@ class MonteCarloEngine:
                 return -value
             return value
 
-        working_model = self.__model.get_model()
+        working_model = self.__model
 
         tensor = board_to_tensor(node.board).reshape(1, 8, 8, 12)
         value = working_model.__call__(tensor, training=False).numpy()[0][0]
@@ -135,17 +151,20 @@ class MonteCarloEngine:
         Returns:
             A chess.Move object representing the best move for the given board position.
         """
-        if self.__in_opening is True:
+        if self.__in_opening:
             with chess.polyglot.open_reader("neural_net/Players/mcts_engine/polyglot/DCbook_large.bin") as reader:
                 move = reader.get(board)
                 if move:
                     return move.move
                 print("No longer in opening prep.")
-                self.__model.load_phase_weights(board)
                 self.__in_opening = False
                 
         if len(board.piece_map()) < 5:
-            
+            # Probe the polyglot book for a move
+            with chess.polyglot.open_reader("neural_net/Players/mcts_engine/polyglot/DCbook_large.bin") as reader:
+                move = reader.get(board)
+                if move:
+                    return move.move
 
         # Create a root node for the MCTS tree
         root_node = Node(board)
