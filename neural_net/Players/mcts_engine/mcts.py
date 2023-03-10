@@ -158,7 +158,7 @@ class MonteCarloEngine:
                     return move.move
                 print("No longer in opening prep.")
                 self.__in_opening = False
-                
+
         if len(board.piece_map()) < 5:
             # Probe the polyglot book for a move
             with chess.polyglot.open_reader("neural_net/Players/mcts_engine/polyglot/DCbook_large.bin") as reader:
