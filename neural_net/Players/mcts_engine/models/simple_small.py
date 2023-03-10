@@ -11,7 +11,7 @@ def create_model() -> tf.keras.Sequential:
     model.add(tf.keras.layers.MaxPooling2D(pool_size=2))
     model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dense(units=128, activation='relu'))
-    model.add(tf.keras.layers.Dense(units=1, activation='softmax'))
+    model.add(tf.keras.layers.Dense(units=1, activation='linear'))
     
     optimiser = tf.keras.optimizers.Adam()
     loss = tf.keras.losses.MeanSquaredError()
