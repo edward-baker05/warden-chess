@@ -1,4 +1,5 @@
 from datetime import datetime
+from importlib import import_module
 
 import chess
 import numpy as np
@@ -13,20 +14,8 @@ def train(model_type: str, data: tuple[list[list[str]], list[list[str]]], epochs
     """
     
     training_positions, training_scores = data
-    
-    if model_type == "complex_large":
-        from models.complex_large import create_model
-    elif model_type == "complex_small":
-        from models.complex_small import create_model
-    elif model_type == "simple_large":
-        from models.simple_large import create_model
-    elif model_type == "simple_small":
-        from models.simple_small import create_model
-    elif model_type == "optimal":
-        from models.optimal import create_model
-    else:
-        raise ValueError("Invalid model name")
-    
+    create_model = import_module(f"models.{model_type}").create_model
+   
     model = create_model()
     print(model.summary())
 
