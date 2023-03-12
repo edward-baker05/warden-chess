@@ -201,3 +201,5 @@ def board_to_tensor(board: chess.Board) -> np.ndarray:
                 else:
                     tensor[i][j][piece.piece_type + 5] = 1
     return tensor
+
+board = chess.Board()
