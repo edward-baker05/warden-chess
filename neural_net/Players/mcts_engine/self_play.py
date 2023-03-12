@@ -5,7 +5,7 @@ import pandas as pd
 import tensorflow as tf
 from random import choice
 
-def create_model():
+def create_model() -> tf.keras.Sequential:
     print("Creating model: reinforcement")
     model = tf.keras.models.Sequential()
 
@@ -41,12 +41,12 @@ def create_model():
 
     return model
 
-def display_board(board: chess.Board):
+def display_board(board: chess.Board) -> None:
     for i, row in enumerate(board.unicode(invert_color=True).split("\n")):
         print(f"{8-i} {row}")
     print("  a b c d e f g h")
 
-def play_game(model: tf.keras.Sequential):
+def play_game(model: tf.keras.Sequential) -> None:
     board = chess.Board()
     game = chess.pgn.Game()
 
@@ -78,7 +78,7 @@ def play_game(model: tf.keras.Sequential):
     print(f"Winner of the game was {board.Outcome().winner}")
     # write_game(board)
 
-def write_game(board: chess.Board):
+def write_game(board: chess.Board) -> None:
     result = board.outcome().winner
     if result == chess.WHITE:
         winner = 'w'
@@ -93,7 +93,7 @@ def write_game(board: chess.Board):
         board.pop()
     print("Game written to file")
 
-def board_to_tensor(board: chess.Board):
+def board_to_tensor(board: chess.Board) -> np.ndarray:
     tensor = np.zeros((8, 8, 12))
     for i in range(8):
         for j in range(8):
@@ -105,7 +105,7 @@ def board_to_tensor(board: chess.Board):
                     tensor[i][j][piece.piece_type + 5] = 1
     return tensor
 
-def train(model: tf.keras.Sequential):
+def train(model: tf.keras.Sequential) -> None:
     # for i in range(10):
     #     print(f"Playing game {i+1}")
     #     play_game(model)
@@ -127,7 +127,7 @@ def train(model: tf.keras.Sequential):
     model.save_weights("/content/sample_data/reinforcement.h5")
     print("Saved weights to disk.")
 
-def get_data() -> tuple[list[list[str]], list[list[str]]]:
+def get_data() -> tuple[np.ndarray, np.ndarray]:
     data = pd.read_csv("/content/sample_data/self_play.csv")
 
     training_positions = []
