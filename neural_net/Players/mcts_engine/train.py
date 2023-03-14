@@ -43,7 +43,7 @@ def get_data() -> tuple[list[list[str]], list[list[str]]]:
     Returns:
         A list of lists representing the data for the given phase.
     """
-    data = pd.read_csv("Games/training_data_full.csv").values.tolist()
+    data = pd.read_csv("Games/lichess_db_standard_rated_2015-08.csv").values.tolist()
     
     training_positions = []
     training_scores = []
@@ -85,8 +85,8 @@ if __name__ == "__main__":
     data = get_data()
     # models = ["simple_small", "simple_large", "complex_small", "complex_large"]
     # epoch_counts = [134, 58, 48, 36]
-    models = ["optimal"]
-    epoch_counts = [38]
+    models = ["reinforcement"]
+    epoch_counts = [50]
     for model, epoch_count in zip(models, epoch_counts):
         train(model, data, epoch_count)
         input("Press to proceed to next model...")

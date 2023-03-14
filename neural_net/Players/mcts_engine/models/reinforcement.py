@@ -18,8 +18,7 @@ def create_model():
     model.add(tf.keras.layers.MaxPooling2D(pool_size=2))
     model.add(tf.keras.layers.BatchNormalization())
 
-    model.add(tf.keras.layers.Conv2D(1024, kernel_size=3, padding='same', activation='relu'))
-    model.add(tf.keras.layers.MaxPooling2D(pool_size=2))
+    model.add(tf.keras.layers.Conv2D(1024, kernel_size=3, padding='same', strides=2, activation='relu'))
     model.add(tf.keras.layers.BatchNormalization())
 
     model.add(tf.keras.layers.Flatten())
