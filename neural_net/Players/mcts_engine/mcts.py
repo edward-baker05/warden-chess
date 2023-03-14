@@ -47,14 +47,11 @@ class MonteCarloEngine:
 
     def __search(self, node: Node) -> Node:
         """
-        Perform a Monte Carlo tree search from the given node.
-
+        Run the Monte Carlo tree search from the given node.
         Args:
-            node: the root Node object to start the search from.
-            model: the TensorFlow model to use for evaluating positions.
-
+            node: the Node object to start the search from.
         Returns:
-            The selected child Node object to continue the search from.
+            The Node object that was selected.
         """
         for _ in range(self.__iterations):
             leaf_node = self.__select_leaf(node)
