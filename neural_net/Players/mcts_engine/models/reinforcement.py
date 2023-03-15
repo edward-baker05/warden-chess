@@ -4,6 +4,7 @@ tf.get_logger().setLevel('ERROR')
 
 def create_model():
     print("Creating model: reinforcement")
+    print("Creating model: reinforcement")
     model = tf.keras.models.Sequential()
 
     model.add(tf.keras.layers.Conv2D(128, kernel_size=3, padding='same', activation='relu', input_shape=(8, 8, 12)))
@@ -18,7 +19,7 @@ def create_model():
     model.add(tf.keras.layers.BatchNormalization())
     model.add(tf.keras.layers.MaxPooling2D(pool_size=2))
 
-    model.add(tf.keras.layers.Conv2D(1024, kernel_size=3, padding='same', strides=2, activation='relu'))
+    model.add(tf.keras.layers.Conv2D(1024, kernel_size=3, padding='same', activation='relu'))
     model.add(tf.keras.layers.BatchNormalization())
 
     model.add(tf.keras.layers.Flatten())
@@ -29,7 +30,7 @@ def create_model():
     optimiser = tf.keras.optimizers.Adam()
     loss = tf.keras.losses.CategoricalCrossentropy()
     
-    model.compile(optimizer=optimiser, loss=loss, metrics=['accuracy'])
+    model.compile(optimizer=optimiser, loss=loss, metrics=['accuracy'], run_eagerly=True)
     
     try:
         model.load_weights("neural_net/Players/mcts_engine/models/reinforcement.h5")

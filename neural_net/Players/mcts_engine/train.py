@@ -85,7 +85,7 @@ if __name__ == "__main__":
     data = get_data()
     # models = ["simple_small", "simple_large", "complex_small", "complex_large"]
     # epoch_counts = [134, 58, 48, 36]
-    models = ["reinforcement"]
+    models = ["optimal"]
     epoch_counts = [50]
     for model, epoch_count in zip(models, epoch_counts):
         train(model, data, epoch_count)
