@@ -1,5 +1,5 @@
 var board = null
-var game = new Chess('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1')
+var game = new Chess('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
 var whiteSquareGrey = '#a9a9a9'
 var blackSquareGrey = '#696969'
 var playerColour = null

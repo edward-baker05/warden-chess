@@ -23,17 +23,5 @@ def get_move():
     end = move.uci()[2:4]
     return jsonify(result=(start, end))
 
-"""
-@app.route('/get_move', methods=['POST', 'GET'])
-def get_move():
-    from static.Python.stockfish_engine import StockfishEngine
-    fen = request.args.get('fen')
-    engine = StockfishEngine()
-    board = chess.Board(fen)
-    move = engine.get_move(board)
-    start = move[:2]
-    end = move[2:4]
-    return jsonify(result=(start, end))
-"""
 if __name__ == '__main__':
     app.run()

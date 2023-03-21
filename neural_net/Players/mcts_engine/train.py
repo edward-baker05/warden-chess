@@ -24,8 +24,8 @@ def train(model_type: str, data: tuple[list[list[str]], list[list[str]]], epochs
         start_time = datetime.now()
         model.fit(np.array(training_positions),
                             np.array(training_scores),
-                            epochs=epochs, 
-                            batch_size=128,
+                            epochs=50, 
+                            batch_size=64,
                             shuffle=True,
                             )
         print(f"Training took {datetime.now() - start_time} seconds.")
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     data = get_data()
     # models = ["simple_small", "simple_large", "complex_small", "complex_large"]
     # epoch_counts = [134, 58, 48, 36]
-    models = ["optimal"]
+    models = ["simple_large"]
     epoch_counts = [50]
     for model, epoch_count in zip(models, epoch_counts):
         train(model, data, epoch_count)

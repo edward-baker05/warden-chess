@@ -1,6 +1,7 @@
 from __future__ import annotations
 import chess
 import chess.polyglot
+import chess.syzygy
 import numpy as np
 from Players.mcts_engine.transposition import TranspositionTable
 from Players.mcts_engine.node import Node
@@ -155,14 +156,14 @@ class MonteCarloEngine:
                     return move.move
                 print("No longer in opening prep.")
                 self.__in_opening = False
-
-        if len(board.piece_map()) < 5:
-            # Probe the polyglot book for a move
-            with chess.polyglot.open_reader("neural_net/Players/mcts_engine/polyglot/DCbook_large.bin") as reader:
-                move = reader.get(board)
-                if move:
-                    return move.move
-
+                
+        if len(board.move_stack) < 5:
+            options = []
+            with chess.syzygy.open_tablebase("neural_net/Players/mcts_engine/syzygy") as tablebase:
+                for move in board.legal_moves:
+                    options.append(tablebase.probe_dtz(board))
+            return list(board.legal_moves)[np.argmax(options)]
+        
         # Create a root node for the MCTS tree
         root_node = Node(board)
 
