@@ -6,28 +6,34 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-tf.get_logger().setLevel('WARNING')
+tf.get_logger().setLevel("WARNING")
 
-def train(model_type: str, data: tuple[list[list[str]], list[list[str]]], epochs: int) -> None:
+
+def train(
+    model_type: str, data: tuple[list[list[str]], list[list[str]]], epochs: int
+) -> None:
     """
     Train the TensorFlow model using the data in the `sample_fen.csv` file. The model is saved to the file `weights.h5` after training.
     """
-    
+
     training_positions, training_scores = data
     create_model = import_module(f"models.{model_type}").create_model
-   
+
     model = create_model()
     print(model.summary())
 
     try:
-        print("############################################\nStarting training...\n############################################")
+        print(
+            "############################################\nStarting training...\n############################################"
+        )
         start_time = datetime.now()
-        model.fit(np.array(training_positions),
-                            np.array(training_scores),
-                            epochs=50, 
-                            batch_size=64,
-                            shuffle=True,
-                            )
+        model.fit(
+            np.array(training_positions),
+            np.array(training_scores),
+            epochs=50,
+            batch_size=64,
+            shuffle=True,
+        )
         print(f"Training took {datetime.now() - start_time} seconds.")
     except KeyboardInterrupt:
         pass
@@ -35,6 +41,7 @@ def train(model_type: str, data: tuple[list[list[str]], list[list[str]]], epochs
     print("\nTraining complete.")
     model.save_weights(f"neural_net/Players/mcts_engine/models/{model_type}.h5")
     print("Saved weights to disk.")
+
 
 def get_data() -> tuple[list[list[str]], list[list[str]]]:
     """Get the data for the given phase.
@@ -44,23 +51,24 @@ def get_data() -> tuple[list[list[str]], list[list[str]]]:
         A list of lists representing the data for the given phase.
     """
     data = pd.read_csv("Games/lichess_db_standard_rated_2015-08.csv").values.tolist()
-    
+
     training_positions = []
     training_scores = []
-    
+
     for position in data:
         try:
             score = int(position[1]) / 10
         except ValueError:
             continue
-        
+
         board = chess.Board(position[0])
         board_as_tensor = board_to_tensor(board)
 
         training_positions.append(board_as_tensor)
         training_scores.append(score)
-    
+
     return training_positions, training_scores
+
 
 def board_to_tensor(board: chess.Board) -> np.ndarray:
     """Convert the given board position to a tensor.
@@ -75,10 +83,11 @@ def board_to_tensor(board: chess.Board) -> np.ndarray:
             piece = board.piece_at(i * 8 + j)
             if piece is not None:
                 if piece.color:
-                    tensor[i][j][piece.piece_type-1] = 1
+                    tensor[i][j][piece.piece_type - 1] = 1
                 else:
                     tensor[i][j][piece.piece_type + 5] = 1
     return tensor
+
 
 if __name__ == "__main__":
     data = get_data()
