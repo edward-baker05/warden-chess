@@ -69,7 +69,6 @@ def board_to_tensor(board: chess.Board) -> np.ndarray:
     Returns:
         A numpy array representing the board position as a tensor.
     """
-    # Convert the board to a tensor
     tensor = np.zeros((8, 8, 12))
     for i in range(8):
         for j in range(8):
@@ -83,10 +82,8 @@ def board_to_tensor(board: chess.Board) -> np.ndarray:
 
 if __name__ == "__main__":
     data = get_data()
-    # models = ["simple_small", "simple_large", "complex_small", "complex_large"]
-    # epoch_counts = [134, 58, 48, 36]
-    models = ["simple_large"]
-    epoch_counts = [50]
+    models = ["simple_small", "simple_large", "complex_small", "complex_large"]
+    epoch_counts = [134, 58, 48, 36]
     for model, epoch_count in zip(models, epoch_counts):
         train(model, data, epoch_count)
         input("Press to proceed to next model...")

@@ -63,6 +63,18 @@ function onDrop(source, target) {
     getAIMove();
 }
 
+function getAIMove() {
+    console.log("Quering AI for next move...");
+    const fen = game.fen();
+    const colour = playerColour;
+    $.getJSON('/get_move', { fen: fen, colour: colour },
+        function (response) {
+            const fen_result = response.result;
+            aiMove(fen_result[0], fen_result[1]);
+        });
+    return true;
+}
+
 function aiMove(source, target) {
     removeGreySquares()
 
@@ -161,21 +173,6 @@ function getColour() {
     })
 }
 
-function getAIMove() {
-    console.log("Quering AI for next move...");
-    const fen = game.fen();
-    const colour = playerColour;
-    $.getJSON('/get_move', { fen: fen, colour: colour },
-        function (response) {
-            const fen_result = response.result;
-            aiMove(fen_result[0], fen_result[1]);
-        });
-    return true;
-}
-
 playerColour = getColour()
 console.log("Player colour is: ");
 console.log(playerColour);
-if (playerColour === 'b') {
-    getAIMove();
-}

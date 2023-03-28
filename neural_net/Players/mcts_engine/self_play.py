@@ -106,10 +106,6 @@ def board_to_tensor(board: chess.Board) -> np.ndarray:
     return tensor
 
 def train(model: tf.keras.Sequential) -> None:
-    # for i in range(10):
-    #     print(f"Playing game {i+1}")
-    #     play_game(model)
-    
     print("Starting training")
     training_positions, training_scores = get_data()
     

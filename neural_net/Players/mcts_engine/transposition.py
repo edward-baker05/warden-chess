@@ -12,11 +12,11 @@ class TranspositionTable:
         """
         Look up the board position in the transposition table and return the value if it exists.
 
-        Parameters:
-        board: a chess.Board object representing the current board position.
+        Args:
+            board: a chess.Board object representing the current board position.
 
         Returns:
-        The value associated with the board position in the transposition table, or None if the board position is not in the table.
+            The value associated with the board position in the transposition table, or None if the board position is not in the table.
         """
         # Hash the board position to use as a key in the transposition table
         key = board.fen()
@@ -29,14 +29,10 @@ class TranspositionTable:
         return None
 
     def put(self, board: chess.Board, value: float) -> None:
-        """Store the value in the transposition table with the board position as the key.
+        """Store the value in the transposition table with the board FEN as the key.
 
-        Parameters:
-        board: a chess.Board object representing the current board position.
-        value: the value to store in the transposition table.
+        Args:
+            board: a chess.Board object representing the current board position.
+            value: the value to store in the transposition table.
         """
-        # Hash the board position to use as a key in the transposition table
-        key = board.fen()
-
-        # Store the value in the table
-        self.table[key] = value
+        self.table[board.fen()] = value

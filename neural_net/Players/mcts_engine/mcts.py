@@ -18,18 +18,22 @@ class MonteCarloEngine:
             iterations: the number of iterations to run the Monte Carlo tree search.
             max_depth: the maximum depth to search in the tree.
         """
+        # Create a TensorFlow model
         self.__model = self.__create_model(model_type)
-
+        self.transposition_table = TranspositionTable()
+        
         self.__colour = colour
         self.__max_depth = max_depth
         self.__temperature = temperature
         self.__iterations = iterations
         self.__in_opening = False
-
-        # Create a transposition table
-        self.transposition_table = TranspositionTable()
         
-    def __create_model(self, model_type: str) -> Model:
+        
+    def __create_model(self, model_type: str) -> tf.keras.Sequential:
+        """
+        Create a TensorFlow model based on the given model type.
+        """
+        # Match the model type to a function that creates the model
         match model_type:
             case "simple_small":
                 from Players.mcts_engine.models.simple_small import create_model
@@ -39,11 +43,10 @@ class MonteCarloEngine:
                 from Players.mcts_engine.models.complex_small import create_model
             case "complex_large":
                 from Players.mcts_engine.models.complex_large import create_model
-            case "optimal":
-                from Players.mcts_engine.models.optimal import create_model
             case _:
                 raise ValueError("Invalid model name")
             
+        # Return the model
         return create_model()
 
     def __search(self, node: Node) -> Node:
@@ -102,6 +105,7 @@ class MonteCarloEngine:
         if node.board.is_checkmate():
             if node.board.turn != self.__colour:
                 return float('inf')
+            return -float('inf')
 
         # Check if the position is in the transposition table
         value = self.transposition_table.get(node.board)
@@ -130,12 +134,12 @@ class MonteCarloEngine:
             node: the leaf Node object to start the backpropagation from.
             value: the evaluation value to backpropagate.
         """
+        # Update the visit and win counts for each node
         while node is not None:
             node.visits += 1
             if value > 0:
                 node.wins += 1
-            # node.value = node.wins / node.visits
-            node.value = value
+            node.value = node.wins / node.visits
             node = node.parent
 
     def get_move(self, board: chess.Board) -> chess.Move:
@@ -149,6 +153,7 @@ class MonteCarloEngine:
         Returns:
             A chess.Move object representing the best move for the given board position.
         """
+        # Check if the position is in the opening book
         if self.__in_opening:
             with chess.polyglot.open_reader("neural_net/Players/mcts_engine/polyglot/DCbook_large.bin") as reader:
                 move = reader.get(board)
@@ -156,7 +161,8 @@ class MonteCarloEngine:
                     return move.move
                 print("No longer in opening prep.")
                 self.__in_opening = False
-                
+        
+        # Check if the position is in the endgame tablebase
         if len(board.move_stack) < 5:
             options = []
             with chess.syzygy.open_tablebase("neural_net/Players/mcts_engine/syzygy") as tablebase:
@@ -188,7 +194,6 @@ def board_to_tensor(board: chess.Board) -> np.ndarray:
     Returns:
         A numpy array representing the board position as a tensor.
     """
-    # Convert the board to a tensor
     tensor = np.zeros((8, 8, 12))
     for i in range(8):
         for j in range(8):
@@ -199,5 +204,3 @@ def board_to_tensor(board: chess.Board) -> np.ndarray:
                 else:
                     tensor[i][j][piece.piece_type + 5] = 1
     return tensor
-
-board = chess.Board()
