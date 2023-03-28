@@ -12,8 +12,18 @@ class TranspositionTable:
             [random.randint(1, 2**64 - 1) for _ in range(12)] for _ in range(64)
         ]
         self.__piece_values = {
-            'P': 0, 'N': 1, 'B': 2, 'R': 3, 'Q': 4, 'K': 5,
-            'p': 6, 'n': 7, 'b': 8, 'r': 9, 'q': 10, 'k': 11
+            "P": 0,
+            "N": 1,
+            "B": 2,
+            "R": 3,
+            "Q": 4,
+            "K": 5,
+            "p": 6,
+            "n": 7,
+            "b": 8,
+            "r": 9,
+            "q": 10,
+            "k": 11,
         }
 
     def get(self, board: chess.Board) -> Optional[float]:
@@ -45,7 +55,7 @@ class TranspositionTable:
         """
         self.__table[self.__zobrist_hash(board)] = value
 
-    def __zobrist_hash(self, board: chess.Board) -> int:        
+    def __zobrist_hash(self, board: chess.Board) -> int:
         """
         Calculate the Zobrist hash of the board position.
         Args:
@@ -59,5 +69,5 @@ class TranspositionTable:
             if piece is not None:
                 j = self.__piece_values[piece.symbol()]
                 h = h ^ self.__zobrist_table[i][j]
-        
+
         return h
