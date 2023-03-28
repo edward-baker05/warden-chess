@@ -8,7 +8,9 @@ class TranspositionTable:
     def __init__(self) -> None:
         """Initialize an empty dictionary to store the transposition table."""
         self.__table = {}
-        self.__zobrist_table = [[random.randint(1, 2**64 - 1) for _ in range(12)] for _ in range(64)]
+        self.__zobrist_table = [
+            [random.randint(1, 2**64 - 1) for _ in range(12)] for _ in range(64)
+        ]
         self.__piece_values = {
             'P': 0, 'N': 1, 'B': 2, 'R': 3, 'Q': 4, 'K': 5,
             'p': 6, 'n': 7, 'b': 8, 'r': 9, 'q': 10, 'k': 11
