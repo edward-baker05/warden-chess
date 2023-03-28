@@ -22,7 +22,7 @@ class Node:
         self.wins = 0.0
         self.player = board.turn
         self.value = 0.0
-        
+
         if parent is not None:
             self.depth = parent.depth + 1
         else:
@@ -56,6 +56,8 @@ class Node:
         """
         # If the node has not been visited, return infinity
         if self.visits == 0:
-            return float('inf')
-        # 
-        return self.value + exploration_param * math.sqrt(math.log(self.parent.visits) / self.visits)
+            return float("inf")
+        #
+        return self.value + exploration_param * math.sqrt(
+            math.log(self.parent.visits) / self.visits
+        )

@@ -8,7 +8,14 @@ from Players.mcts_engine.node import Node
 
 
 class MonteCarloEngine:
-    def __init__(self, colour: int, model_type: str, temperature: float = 0.2, iterations: int = 50000, max_depth: int = 25) -> None:
+    def __init__(
+        self,
+        colour: int,
+        model_type: str,
+        temperature: float = 0.2,
+        iterations: int = 50000,
+        max_depth: int = 25,
+    ) -> None:
         """
         Initialize the Monte Carlo engine.
 
@@ -21,14 +28,13 @@ class MonteCarloEngine:
         # Create a TensorFlow model
         self.__model = self.__create_model(model_type)
         self.transposition_table = TranspositionTable()
-        
+
         self.__colour = colour
         self.__max_depth = max_depth
         self.__temperature = temperature
         self.__iterations = iterations
         self.__in_opening = False
-        
-        
+
     def __create_model(self, model_type: str) -> tf.keras.Sequential:
         """
         Create a TensorFlow model based on the given model type.
@@ -45,7 +51,7 @@ class MonteCarloEngine:
                 from Players.mcts_engine.models.complex_large import create_model
             case _:
                 raise ValueError("Invalid model name")
-            
+
         # Return the model
         return create_model()
 
@@ -104,8 +110,8 @@ class MonteCarloEngine:
         # Check if it is checkmate
         if node.board.is_checkmate():
             if node.board.turn != self.__colour:
-                return float('inf')
-            return -float('inf')
+                return float("inf")
+            return -float("inf")
 
         # Check if the position is in the transposition table
         value = self.transposition_table.get(node.board)
@@ -155,21 +161,25 @@ class MonteCarloEngine:
         """
         # Check if the position is in the opening book
         if self.__in_opening:
-            with chess.polyglot.open_reader("neural_net/Players/mcts_engine/polyglot/DCbook_large.bin") as reader:
+            with chess.polyglot.open_reader(
+                "neural_net/Players/mcts_engine/polyglot/DCbook_large.bin"
+            ) as reader:
                 move = reader.get(board)
                 if move:
                     return move.move
                 print("No longer in opening prep.")
                 self.__in_opening = False
-        
+
         # Check if the position is in the endgame tablebase
         if len(board.move_stack) < 5:
             options = []
-            with chess.syzygy.open_tablebase("neural_net/Players/mcts_engine/syzygy") as tablebase:
+            with chess.syzygy.open_tablebase(
+                "neural_net/Players/mcts_engine/syzygy"
+            ) as tablebase:
                 for move in board.legal_moves:
                     options.append(tablebase.probe_dtz(board))
             return list(board.legal_moves)[np.argmax(options)]
-        
+
         # Create a root node for the MCTS tree
         root_node = Node(board)
 
@@ -181,7 +191,8 @@ class MonteCarloEngine:
         chosen_node = self.__search(root_node)
         move = chosen_node.board.peek()
         print(
-            f"AI made move: {move}. This was move number {list(root_node.board.legal_moves).index(move)} of {len(list(root_node.board.legal_moves))}")
+            f"AI made move: {move}. This was move number {list(root_node.board.legal_moves).index(move)} of {len(list(root_node.board.legal_moves))}"
+        )
         return move
 
 
@@ -200,7 +211,7 @@ def board_to_tensor(board: chess.Board) -> np.ndarray:
             piece = board.piece_at(i * 8 + j)
             if piece is not None:
                 if piece.color:
-                    tensor[i][j][piece.piece_type-1] = 1
+                    tensor[i][j][piece.piece_type - 1] = 1
                 else:
                     tensor[i][j][piece.piece_type + 5] = 1
     return tensor
